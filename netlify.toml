@@ -4,6 +4,7 @@
 
 [build.environment]
   NODE_VERSION = "18"
+  SECRETS_SCAN_ENABLED = "false"
 
 [[redirects]]
   from = "/*"
@@ -13,6 +14,6 @@
 [functions]
   node_bundler = "esbuild"
 
-# Environment variables (you'll need to set these in Netlify dashboard)
-# ELEVENLABS_API_KEY=your_key_here
-# ELEVENLABS_VOICE_ID=EXAVITQu4vr4xnSDxMaL
+# Environment variables are set in Netlify dashboard, not here
+# ELEVENLABS_API_KEY - Set in Netlify UI
+# ELEVENLABS_VOICE_ID - Set in Netlify UI

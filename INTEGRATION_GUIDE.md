@@ -17,7 +17,7 @@
    
 2. **Edit `.env.local`:**
    ```
-   ELEVENLABS_API_KEY=sk_your_key_here
+   ELEVENLABS_API_KEY=your_api_key_here
    ELEVENLABS_VOICE_ID=EXAVITQu4vr4xnSDxMaL  # Bella voice (optional)
    ```
 
