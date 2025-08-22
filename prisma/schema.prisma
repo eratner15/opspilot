@@ -1,0 +1,125 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Call {
+  id             String   @id @default(uuid())
+  phoneNumber    String
+  duration       Int      // seconds
+  transcript     String?
+  audioUrl       String?
+  classification Json?    // AI analysis results
+  urgency        Urgency?
+  propertyId     String?
+  unitNumber     String?
+  createdAt      DateTime @default(now())
+  ticket         Ticket?
+}
+
+model Ticket {
+  id            String         @id @default(uuid())
+  callId        String         @unique
+  call          Call           @relation(fields: [callId], references: [id])
+  title         String
+  description   String
+  category      String         // "plumbing", "electrical", "hvac", etc.
+  urgency       Urgency
+  status        TicketStatus   @default(CREATED)
+  propertyId    String
+  unitNumber    String
+  tenantPhone   String
+  assignedTo    String?        // technician ID
+  appfolioId    String?        // external ticket ID
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+  notifications Notification[]
+}
+
+model Technician {
+  id            String   @id @default(uuid())
+  name          String
+  phone         String   @unique
+  email         String?
+  skills        String[] // ["plumbing", "electrical"]
+  available     Boolean  @default(true)
+  location      String   // Geographic zone
+  rating        Float    @default(5.0)
+  responseTime  Int      @default(30) // minutes
+  hourlyRate    Decimal  @db.Decimal(8,2)
+  emergencyRate Decimal  @db.Decimal(8,2) // Higher rate for emergency calls
+  maxJobs       Int      @default(3) // Concurrent job limit
+  workingHours  Json     // {"mon": {"start": "08:00", "end": "17:00"}}
+  companyId     String   // Multi-tenant support
+  company       Company  @relation(fields: [companyId], references: [id])
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+model Company {
+  id               String       @id @default(uuid())
+  name             String
+  twilioNumber     String       @unique
+  appfolioKey      String?
+  settings         Json         // Custom business rules
+  properties       Property[]
+  technicians      Technician[]
+  createdAt        DateTime     @default(now())
+  updatedAt        DateTime     @updatedAt
+}
+
+model Property {
+  id                String   @id @default(uuid())
+  companyId         String
+  company           Company  @relation(fields: [companyId], references: [id])
+  address           String
+  units             Unit[]
+  emergencyContacts String[] // Backup contacts
+  vipStatus         Boolean  @default(false)
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+}
+
+model Unit {
+  id         String   @id @default(uuid())
+  propertyId String
+  property   Property @relation(fields: [propertyId], references: [id])
+  unitNumber String
+  tenant     String?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+}
+
+model Notification {
+  id        String    @id @default(uuid())
+  ticketId  String
+  ticket    Ticket    @relation(fields: [ticketId], references: [id])
+  type      String    // "sms", "email", "call"
+  recipient String    // phone/email
+  message   String
+  status    String    @default("pending")
+  sentAt    DateTime?
+  createdAt DateTime  @default(now())
+}
+
+enum Urgency {
+  LOW
+  MEDIUM
+  HIGH
+  EMERGENCY
+}
+
+enum TicketStatus {
+  CREATED
+  DISPATCHED
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+}

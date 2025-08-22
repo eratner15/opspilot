@@ -1,0 +1,18 @@
+[build]
+  command = "npm run build"
+  publish = ".next"
+
+[build.environment]
+  NODE_VERSION = "18"
+
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
+
+[functions]
+  node_bundler = "esbuild"
+
+# Environment variables (you'll need to set these in Netlify dashboard)
+# ELEVENLABS_API_KEY=your_key_here
+# ELEVENLABS_VOICE_ID=EXAVITQu4vr4xnSDxMaL
