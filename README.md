@@ -139,4 +139,4 @@ This is an MVP demonstration. For production deployment or contributions, please
 
 ---
 
-Built with ❤️ using Next.js, TypeScript, and Claude AI# opspilot
+Built with ❤️ using Next.js, TypeScript, and Claude AI
