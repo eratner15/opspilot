@@ -1,7 +1,7 @@
 # OpsPilot — TASKS.md
 ## Autonomous Build Task Registry
 ## Last Updated: 2026-02-19
-## Total Progress: 9 / 48 units complete
+## Total Progress: 13 / 48 units complete
 ## Current Phase: 1 — CORE CRUD
 ## Build Status: IN PROGRESS
 
@@ -199,25 +199,25 @@ If all tasks in a phase are done → run Phase Gate → proceed to next phase.
 ## PHASE 1: CORE CRUD
 
 ### Unit 1.1 — Customer List Page
-- [ ] Customers tRPC router + list page with data table
+- [x] Customers tRPC router + list page with data table — router (list/getById/create/update/delete/getStats), list page with DataTable, search, type filter, pagination, empty state
   - ACTION: `src/server/trpc/routers/customers.ts` (list, getById, create, update, delete — all with organizationId), `src/lib/validations/customer.ts`, `src/app/(dashboard)/customers/page.tsx` with DataTable (Name, Phone, Type, Jobs, Revenue, Last Service), search, filter by type, pagination 25/page, loading skeleton, empty state
   - VERIFY: List loads, search works, type filter works, pagination correct, empty state shows, mobile scrolls
   - NOTES:
 
 ### Unit 1.2 — Customer Create/Edit + Detail
-- [ ] Customer form and detail page with service history
+- [x] Customer form and detail page with service history — new form with all fields, detail page with stats (revenue/jobs/avg ticket/outstanding), jobs/invoices/quotes tabs, delete confirm
   - ACTION: `customers/new/page.tsx` form (firstName, lastName, phone, email, address, city, state, zip, type, equipmentJson, notes), `customers/[id]/page.tsx` with info card, equipment list, service history, calls tab, invoices tab, stats (lifetime revenue, total jobs, avg ticket)
   - VERIFY: Create validates, phone formats, detail loads related data, edit saves + toast
   - NOTES:
 
 ### Unit 1.3 — Technician List + Detail
-- [ ] Technicians tRPC router + list and detail pages
+- [x] Technicians tRPC router + list and detail pages — list with DataTable/status filter/skills badges, new form, [id] detail page with skills/job list/stats, deactivate action
   - ACTION: `src/server/trpc/routers/technicians.ts`, `src/lib/validations/technician.ts`, list page (Name, Phone, Type, Skills, Status, Jobs, Rating), filter by status, `technicians/[id]/page.tsx` with info, skills tags, assigned jobs, performance stats
   - VERIFY: List renders seed techs, filter works, detail shows jobs
   - NOTES:
 
 ### Unit 1.4 — Job List (Kanban + List Toggle)
-- [ ] Jobs tRPC router + dual-view list page
+- [x] Jobs tRPC router + dual-view list page — router with status transition rules, kanban (4 columns + priority colors), list DataTable, status/priority filters, calendar view; new form with line items + assignment; [id] detail with transitions/activity log
   - ACTION: `src/server/trpc/routers/jobs.ts` (list, getById, create, update, updateStatus), `src/lib/validations/job.ts`, kanban component (columns: New/Scheduled/In Progress/Completed/Invoiced), list view DataTable, tab toggle, filter bar (status, tech, priority, date range)
   - DECISION: Click-based status changes (dropdown on card), not drag-drop.
   - VERIFY: Kanban renders, list sorts, toggle works, filters apply, `pnpm build` passes
