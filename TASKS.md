@@ -1,7 +1,7 @@
 # OpsPilot — TASKS.md
 ## Autonomous Build Task Registry
 ## Last Updated: 2026-02-19
-## Total Progress: 36 / 48 units complete
+## Total Progress: 37 / 48 units complete
 ## Current Phase: 3 — QUOTING & INVOICING
 ## Build Status: IN PROGRESS
 
@@ -382,7 +382,7 @@ If all tasks in a phase are done → run Phase Gate → proceed to next phase.
   - NOTES:
 
 ### Unit 4.3 — Tech Performance Enhancement
-- [ ] Performance metrics on technician detail
+- [x] Performance metrics on technician detail — revenue sparkline (AreaChart 6mo), jobs-by-status progress bars, team comparison bar chart + rank cards; tsc clean
   - ACTION: Revenue sparkline, jobs by status, avg completion time, team comparison
   - VERIFY: Data displays, comparisons make sense
   - NOTES:
