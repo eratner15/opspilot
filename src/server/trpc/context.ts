@@ -33,7 +33,7 @@ export async function createContext(
 
   return {
     userId: userId ?? null,
-    organizationId: orgId ?? null,
+    organizationId: orgId ?? userId ?? null,
     userRole: orgRole ?? "org:member",
     db,
     kv,

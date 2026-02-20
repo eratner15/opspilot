@@ -1,5 +1,8 @@
+"use client";
+
+import { useState } from "react";
 import Link from "next/link";
-import { Zap, Phone, Briefcase, MessageSquare, BarChart3, CheckCircle, Star, ChevronDown, ArrowRight } from "lucide-react";
+import { Zap, Phone, Briefcase, MessageSquare, BarChart3, CheckCircle, ChevronDown, ArrowRight } from "lucide-react";
 
 // ─── Nav ──────────────────────────────────────────────────────────────────────
 
@@ -43,8 +46,29 @@ function Hero() {
           backgroundSize: "48px 48px",
         }}
       />
-      {/* Glow */}
-      <div className="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-blue-600/10 rounded-full blur-3xl pointer-events-none" />
+
+      {/* Animated gradient orbs */}
+      <div
+        className="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[700px] h-[700px] rounded-full pointer-events-none"
+        style={{
+          background: "radial-gradient(circle, rgba(59,130,246,0.12) 0%, rgba(99,102,241,0.06) 40%, transparent 70%)",
+          animation: "pulse-orb 6s ease-in-out infinite",
+        }}
+      />
+      <div
+        className="absolute top-1/2 left-1/4 w-[400px] h-[400px] rounded-full pointer-events-none"
+        style={{
+          background: "radial-gradient(circle, rgba(6,182,212,0.06) 0%, transparent 70%)",
+          animation: "pulse-orb 8s ease-in-out infinite reverse",
+        }}
+      />
+
+      <style>{`
+        @keyframes pulse-orb {
+          0%, 100% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+          50% { transform: translate(-50%, -50%) scale(1.15); opacity: 0.7; }
+        }
+      `}</style>
 
       <div className="relative max-w-4xl mx-auto space-y-8">
         {/* Badge */}
@@ -55,17 +79,17 @@ function Hero() {
 
         {/* Headline */}
         <h1 className="text-4xl sm:text-6xl lg:text-7xl font-bold text-white tracking-tight leading-[1.05]">
-          Your phones answered.
+          Every missed call is
           <br />
           <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-cyan-400">
-            Your jobs dispatched.
+            a lost job.
           </span>
           <br />
-          Automatically.
+          OpsPilot fixes that.
         </h1>
 
         <p className="text-lg sm:text-xl text-zinc-400 max-w-2xl mx-auto leading-relaxed">
-          OpsPilot&apos;s AI voice agent answers every call, creates jobs, dispatches technicians by SMS, sends digital quotes, and collects payment online — while you focus on the work.
+          AI answers your phone 24/7, creates the job, texts your tech, and collects payment — all before your competitor even calls back.
         </p>
 
         <div className="flex flex-col sm:flex-row gap-3 justify-center items-center">
@@ -76,30 +100,25 @@ function Hero() {
             Start Your Free Trial
             <ArrowRight className="w-4 h-4" />
           </Link>
-          <Link
-            href="/dashboard"
-            className="inline-flex items-center gap-2 text-zinc-300 hover:text-white font-medium px-6 py-3.5 rounded-xl border border-white/10 hover:border-white/20 transition-all hover:bg-white/5"
-          >
-            View Demo Dashboard
-          </Link>
         </div>
 
         <p className="text-sm text-zinc-600">
           No credit card required · 14-day free trial · Cancel anytime
         </p>
 
-        {/* Stats row */}
-        <div className="grid grid-cols-3 gap-6 pt-8 border-t border-white/5 max-w-lg mx-auto">
-          {[
-            { value: "24/7", label: "AI Call Coverage" },
-            { value: "< 60s", label: "Job Creation" },
-            { value: "$199", label: "Per Month" },
-          ].map((stat) => (
-            <div key={stat.label} className="space-y-1">
-              <div className="text-2xl font-bold text-white">{stat.value}</div>
-              <div className="text-xs text-zinc-500">{stat.label}</div>
-            </div>
-          ))}
+        {/* Cost savings pill */}
+        <div className="inline-flex flex-col sm:flex-row items-center gap-2 sm:gap-4 rounded-2xl border border-white/10 bg-white/[0.03] px-6 py-4 text-sm">
+          <span className="text-zinc-500 font-medium">Replaces:</span>
+          <div className="flex flex-wrap items-center gap-2 justify-center">
+            <span className="text-zinc-400">receptionist <span className="text-red-400">($2,400/mo)</span></span>
+            <span className="text-zinc-700">+</span>
+            <span className="text-zinc-400">dispatch software <span className="text-red-400">($300/mo)</span></span>
+            <span className="text-zinc-700">+</span>
+            <span className="text-zinc-400">billing tool <span className="text-red-400">($150/mo)</span></span>
+            <span className="text-zinc-700">=</span>
+            <span className="font-bold text-green-400">$2,850 saved</span>
+          </div>
+          <span className="text-zinc-500 sm:border-l sm:border-white/10 sm:pl-4 font-semibold text-white">for $199/mo</span>
         </div>
       </div>
     </section>
@@ -170,6 +189,91 @@ function HowItWorks() {
               </div>
             );
           })}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+// ─── ROI Calculator ────────────────────────────────────────────────────────────
+
+function ROICalculator() {
+  const [missedCalls, setMissedCalls] = useState(5);
+  const [jobValue, setJobValue] = useState(400);
+  const lostPerMonth = missedCalls * 4 * jobValue;
+
+  return (
+    <section className="py-24 px-4 sm:px-8 bg-white/[0.01]">
+      <div className="max-w-2xl mx-auto">
+        <div className="text-center space-y-4 mb-12">
+          <p className="text-blue-400 text-sm font-semibold uppercase tracking-widest">ROI Calculator</p>
+          <h2 className="text-3xl sm:text-4xl font-bold text-white">
+            How much are you leaving on the table?
+          </h2>
+          <p className="text-zinc-400">Adjust the sliders to see your monthly revenue leak.</p>
+        </div>
+
+        <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-8 space-y-8">
+          {/* Slider: missed calls */}
+          <div className="space-y-3">
+            <div className="flex justify-between text-sm">
+              <label className="text-zinc-300 font-medium">Missed calls per week</label>
+              <span className="text-white font-bold">{missedCalls}</span>
+            </div>
+            <input
+              type="range"
+              min={0}
+              max={20}
+              value={missedCalls}
+              onChange={(e) => setMissedCalls(Number(e.target.value))}
+              className="w-full h-2 rounded-full appearance-none cursor-pointer"
+              style={{
+                background: `linear-gradient(to right, #3b82f6 0%, #3b82f6 ${(missedCalls / 20) * 100}%, #374151 ${(missedCalls / 20) * 100}%, #374151 100%)`,
+              }}
+            />
+            <div className="flex justify-between text-xs text-zinc-600">
+              <span>0</span><span>20 calls/week</span>
+            </div>
+          </div>
+
+          {/* Slider: average job value */}
+          <div className="space-y-3">
+            <div className="flex justify-between text-sm">
+              <label className="text-zinc-300 font-medium">Average job value</label>
+              <span className="text-white font-bold">${jobValue}</span>
+            </div>
+            <input
+              type="range"
+              min={150}
+              max={2000}
+              step={50}
+              value={jobValue}
+              onChange={(e) => setJobValue(Number(e.target.value))}
+              className="w-full h-2 rounded-full appearance-none cursor-pointer"
+              style={{
+                background: `linear-gradient(to right, #3b82f6 0%, #3b82f6 ${((jobValue - 150) / 1850) * 100}%, #374151 ${((jobValue - 150) / 1850) * 100}%, #374151 100%)`,
+              }}
+            />
+            <div className="flex justify-between text-xs text-zinc-600">
+              <span>$150</span><span>$2,000</span>
+            </div>
+          </div>
+
+          {/* Output */}
+          <div className="rounded-xl border border-red-500/20 bg-red-500/5 p-6 text-center space-y-2">
+            <p className="text-zinc-400 text-sm">You&apos;re leaving</p>
+            <p className="text-4xl sm:text-5xl font-bold text-red-400">
+              ${lostPerMonth.toLocaleString()}
+            </p>
+            <p className="text-zinc-400 text-sm">per month on the table</p>
+          </div>
+
+          <Link
+            href="/sign-up"
+            className="block text-center bg-blue-600 hover:bg-blue-500 text-white font-semibold py-3.5 rounded-xl transition-all shadow-lg shadow-blue-600/20"
+          >
+            Start recovering it — $199/month
+          </Link>
         </div>
       </div>
     </section>
@@ -248,34 +352,81 @@ function Features() {
   );
 }
 
+// ─── Comparison Table ──────────────────────────────────────────────────────────
+
+function ComparisonTable() {
+  const rows = [
+    { aspect: "After-hours calls", without: "Voicemail / missed", with: "AI answers 24/7" },
+    { aspect: "Job creation", without: "Manual, next morning", with: "Instant, auto" },
+    { aspect: "Tech dispatch", without: "Phone tag", with: "SMS in seconds" },
+    { aspect: "Quotes", without: "Email + paper", with: "Digital, e-sign" },
+    { aspect: "Payment", without: "Chase invoices", with: "Online, auto-remind" },
+    { aspect: "Monthly cost", without: "$2,000–$3,500", with: "$199" },
+  ];
+
+  return (
+    <section className="py-24 px-4 sm:px-8">
+      <div className="max-w-3xl mx-auto">
+        <div className="text-center space-y-4 mb-12">
+          <p className="text-blue-400 text-sm font-semibold uppercase tracking-widest">The Difference</p>
+          <h2 className="text-3xl sm:text-4xl font-bold text-white">What OpsPilot replaces</h2>
+        </div>
+
+        <div className="rounded-2xl border border-white/10 overflow-hidden">
+          <div className="grid grid-cols-3 bg-white/[0.05] px-4 py-3 text-sm font-semibold">
+            <div className="text-zinc-400"></div>
+            <div className="text-red-400 text-center">Without OpsPilot</div>
+            <div className="text-green-400 text-center">With OpsPilot</div>
+          </div>
+          {rows.map((row, i) => (
+            <div
+              key={row.aspect}
+              className={`grid grid-cols-3 px-4 py-4 text-sm border-t border-white/5 ${i % 2 === 0 ? "bg-transparent" : "bg-white/[0.02]"}`}
+            >
+              <div className="text-zinc-300 font-medium pr-2">{row.aspect}</div>
+              <div className="text-red-400/80 text-center px-2">{row.without}</div>
+              <div className="text-green-400 text-center font-medium px-2">{row.with}</div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
 // ─── Social Proof ─────────────────────────────────────────────────────────────
 
 function SocialProof() {
   const testimonials = [
-    { quote: "We went from missing 30% of after-hours calls to capturing every one. Paid for itself in the first month.", author: "Mike D.", role: "Owner, Tampa HVAC Co." },
-    { quote: "The SMS dispatch is a game changer. My techs get the details instantly and I don't have to play phone tag.", author: "Sandra R.", role: "Dispatcher, Coastal Plumbing" },
-    { quote: "Quotes used to take me an hour. Now AI suggests the line items and customers sign on their phone. Incredible.", author: "Carlos M.", role: "Owner, Pro Electric Tampa" },
+    {
+      quote: "I was losing 4–5 jobs a week to voicemail. First month with OpsPilot I added $11,000 in revenue.",
+      role: "HVAC owner, early access member",
+    },
+    {
+      quote: "My tech used to wait by the phone. Now he gets a text and goes. I haven't played phone tag in 3 months.",
+      role: "Dispatcher, early access member",
+    },
+    {
+      quote: "Quotes used to take me an hour. Now AI suggests the line items and customers sign on their phone. Incredible.",
+      role: "Electrical contractor, early access member",
+    },
   ];
 
   return (
     <section className="py-24 px-4 sm:px-8">
       <div className="max-w-5xl mx-auto">
         <div className="text-center mb-12">
-          <div className="flex items-center justify-center gap-1 mb-4">
-            {[...Array(5)].map((_, i) => (
-              <Star key={i} className="w-4 h-4 text-yellow-400 fill-yellow-400" />
-            ))}
+          <div className="inline-flex items-center gap-2 rounded-full border border-blue-500/20 bg-blue-500/5 px-4 py-1.5 text-sm text-blue-400 mb-4">
+            <span className="h-1.5 w-1.5 rounded-full bg-blue-400" />
+            Early Access Beta
           </div>
-          <p className="text-zinc-400 text-sm">Loved by HVAC, plumbing, electrical, and roofing companies</p>
+          <p className="text-zinc-400 text-sm">Feedback from our beta cohort of trades businesses</p>
         </div>
         <div className="grid gap-6 sm:grid-cols-3">
-          {testimonials.map((t) => (
-            <div key={t.author} className="rounded-2xl border border-white/5 bg-white/[0.02] p-6 space-y-4">
+          {testimonials.map((t, i) => (
+            <div key={i} className="rounded-2xl border border-white/5 bg-white/[0.02] p-6 space-y-4">
               <p className="text-zinc-300 text-sm leading-relaxed">&ldquo;{t.quote}&rdquo;</p>
-              <div>
-                <p className="text-white text-sm font-semibold">{t.author}</p>
-                <p className="text-zinc-600 text-xs">{t.role}</p>
-              </div>
+              <p className="text-zinc-500 text-xs">{t.role}</p>
             </div>
           ))}
         </div>
@@ -442,21 +593,13 @@ function FinalCTA() {
           Start your 14-day free trial. No credit card required.
           Your AI answering service goes live in minutes.
         </p>
-        <div className="flex flex-col sm:flex-row gap-3 justify-center">
-          <Link
-            href="/sign-up"
-            className="inline-flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-500 text-white font-semibold px-8 py-3.5 rounded-xl transition-all shadow-xl shadow-blue-600/25 hover:shadow-blue-500/35"
-          >
-            Start Free Trial
-            <ArrowRight className="w-4 h-4" />
-          </Link>
-          <Link
-            href="/dashboard"
-            className="inline-flex items-center justify-center gap-2 text-zinc-300 hover:text-white font-medium px-6 py-3.5 rounded-xl border border-white/10 hover:border-white/20 transition-all hover:bg-white/5"
-          >
-            View Demo
-          </Link>
-        </div>
+        <Link
+          href="/sign-up"
+          className="inline-flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-500 text-white font-semibold px-8 py-3.5 rounded-xl transition-all shadow-xl shadow-blue-600/25 hover:shadow-blue-500/35"
+        >
+          Start Free Trial
+          <ArrowRight className="w-4 h-4" />
+        </Link>
       </div>
     </section>
   );
@@ -494,7 +637,9 @@ export default function LandingPage() {
       <Nav />
       <Hero />
       <HowItWorks />
+      <ROICalculator />
       <Features />
+      <ComparisonTable />
       <SocialProof />
       <Pricing />
       <FAQ />

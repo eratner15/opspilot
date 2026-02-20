@@ -2,6 +2,7 @@ import { AppSidebar } from "@/components/layout/app-sidebar";
 import { Topbar } from "@/components/layout/topbar";
 import { TRPCProvider } from "@/components/providers/trpc-provider";
 import { Toaster } from "sonner";
+import { BootstrapGuard } from "@/components/layout/bootstrap-guard";
 
 // Dashboard pages require auth + D1 — always runtime, never prerendered
 export const dynamic = "force-dynamic";
@@ -21,6 +22,7 @@ export default function DashboardLayout({
         </div>
       </div>
       <Toaster position="bottom-right" richColors />
+      <BootstrapGuard />
     </TRPCProvider>
   );
 }

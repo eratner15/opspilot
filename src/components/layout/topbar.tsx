@@ -1,7 +1,20 @@
 "use client";
 
-import { UserButton, OrganizationSwitcher } from "@clerk/nextjs";
+import { UserButton } from "@clerk/nextjs";
 import { MobileNav } from "./mobile-nav";
+import { api } from "@/lib/trpc/client";
+
+function OrgNameDisplay() {
+  const { data: org } = api.settings.getOrg.useQuery(undefined, {
+    retry: false,
+  });
+  if (!org) return null;
+  return (
+    <span className="text-sm font-medium text-foreground/80 truncate max-w-[160px] hidden sm:block">
+      {org.name}
+    </span>
+  );
+}
 
 export function Topbar() {
   return (
@@ -10,14 +23,7 @@ export function Topbar() {
         <MobileNav />
         <div className="flex-1" />
         <div className="flex items-center gap-3">
-          <OrganizationSwitcher
-            appearance={{
-              elements: {
-                rootBox: "text-sm max-w-[160px] sm:max-w-none",
-                organizationSwitcherTrigger: "truncate",
-              },
-            }}
-          />
+          <OrgNameDisplay />
           <UserButton afterSignOutUrl="/" />
         </div>
       </div>

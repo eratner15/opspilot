@@ -35,6 +35,15 @@ const steps = [
 // ─── Step 1: Welcome ──────────────────────────────────────────────────────────
 
 function WelcomeStep({ onNext }: { onNext: () => void }) {
+  const bootstrapMutation = api.auth.bootstrap.useMutation({
+    onSuccess: () => onNext(),
+    onError: () => onNext(), // proceed even if bootstrap errors (org may already exist)
+  });
+
+  const handleGetStarted = () => {
+    bootstrapMutation.mutate();
+  };
+
   return (
     <div className="space-y-8 text-center">
       <div className="mx-auto w-20 h-20 bg-blue-600 rounded-2xl flex items-center justify-center shadow-lg">
@@ -59,8 +68,13 @@ function WelcomeStep({ onNext }: { onNext: () => void }) {
           </div>
         ))}
       </div>
-      <Button size="lg" onClick={onNext} className="w-full max-w-sm">
-        Get Started
+      <Button
+        size="lg"
+        onClick={handleGetStarted}
+        disabled={bootstrapMutation.isPending}
+        className="w-full max-w-sm"
+      >
+        {bootstrapMutation.isPending ? "Setting up..." : "Get Started"}
         <ArrowRight className="ml-2 h-4 w-4" />
       </Button>
     </div>
