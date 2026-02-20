@@ -1,7 +1,7 @@
 # OpsPilot — TASKS.md
 ## Autonomous Build Task Registry
 ## Last Updated: 2026-02-19
-## Total Progress: 23 / 48 units complete
+## Total Progress: 24 / 48 units complete
 ## Current Phase: 2 — VOICE & AI
 ## Build Status: IN PROGRESS
 
@@ -286,7 +286,7 @@ If all tasks in a phase are done → run Phase Gate → proceed to next phase.
   - NOTES:
 
 ### Unit 2.5 — Call Log Pages
-- [ ] Call list and detail pages
+- [x] Call list and detail pages — callsRouter (list/getById/updateStatus/getStats), list page with status filter/search, detail page with AI analysis panel (confidence color-coding), transcript, linked job
   - ACTION: `src/server/trpc/routers/calls.ts`, `calls/page.tsx` (table with filters), `calls/[id]/page.tsx` (AI analysis, transcript, linked entities, confidence color-coding)
   - VERIFY: List renders, filters work, confidence color-coded
   - NOTES:
