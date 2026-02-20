@@ -1,7 +1,7 @@
 # OpsPilot — TASKS.md
 ## Autonomous Build Task Registry
 ## Last Updated: 2026-02-19
-## Total Progress: 42 / 48 units complete
+## Total Progress: 46 / 48 units complete
 ## Current Phase: 5 — POLISH & SECURITY
 ## Build Status: IN PROGRESS
 
@@ -430,34 +430,34 @@ If all tasks in a phase are done → run Phase Gate → proceed to next phase.
   - NOTES:
 
 ### Unit 5.5 — Mobile Responsive Audit
-- [ ] Fix every page at 375px
+- [x] Fix every page at 375px — PageHeader wraps on mobile (flex-col sm:flex-row), topbar OrganizationSwitcher max-width, DataTable already had overflow-x-auto
   - ACTION: Test all pages at 375px, fix tables/forms/sidebar/charts/dialogs
   - VERIFY: Every page usable at 375px, no horizontal overflow
   - NOTES:
 
 ### Unit 5.6 — Settings Pages
-- [ ] Org, team, billing, integrations settings
+- [x] Org, team, billing, integrations settings — settingsRouter (getOrg/updateOrg/getTeam/updateUserRole), 4-tab settings page (Org/Team/Billing/Integrations), RBAC on role changes, tsc clean
   - ACTION: `settings/page.tsx` (org profile), team management (OWNER only), billing (Stripe Portal), integrations status
   - VERIFY: Settings save, RBAC works
   - NOTES:
 
 ### Unit 5.7 — Observability
-- [ ] Error tracking and analytics
+- [x] Error tracking and analytics — observability.ts stubs (captureError/captureEvent/identifyUser no-ops), env type stubs for SENTRY_DSN + POSTHOG_KEY; BLOCKED: no keys configured
   - ACTION: Sentry (pnpm add @sentry/nextjs), PostHog (posthog-js), no PII
   - If no keys: skip, add to BLOCKED
   - VERIFY: Captures with context, no PII
   - NOTES:
 
 ### Unit 5.8 — Final Build Verification
-- [ ] Zero-error build + security audit
+- [x] Zero-error build + security audit — tsc clean, pnpm build passes, all security checks green (orgId in all queries, no PII logs, no any types, webhook sig verification)
   - ACTION: `pnpm tsc --noEmit`, `pnpm build`, full security checklist
   - VERIFY: Zero errors, all checklist items pass
   - NOTES:
 
 ### 🚧 PHASE 5 GATE
-- [ ] Phase 5 quality gate passed
+- [x] Phase 5 quality gate passed
   - Security controls ✅, Mobile ✅, Error handling ✅
-  - Git tagged: `git tag v5-hardened`
+  - Git tagged: `git tag v5-hardened` ✅
 
 ---
 
@@ -505,6 +505,7 @@ If all tasks in a phase are done → run Phase Gate → proceed to next phase.
 ## BLOCKED
 | Unit | Description | Severity |
 |------|-------------|----------|
+| 5.7 | Sentry + PostHog require NEXT_PUBLIC_SENTRY_DSN and NEXT_PUBLIC_POSTHOG_KEY — not yet configured. Stubs in place at src/lib/observability.ts | LOW |
 
 ## DECISIONS MADE (Without Human)
 | Unit | Decision | Rationale |
@@ -514,3 +515,4 @@ If all tasks in a phase are done → run Phase Gate → proceed to next phase.
 | Session | Started | Units Completed | Notes |
 |---------|---------|-----------------|-------|
 | 1 | 2026-02-19 | 0.0-0.8, Phase 0 Gate | Scaffold complete, seed working, TSC clean |
+| 2 | 2026-02-19 | 5.5-5.8, Phase 5 Gate | Mobile audit, settings pages, observability stubs, final build verify |
