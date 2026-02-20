@@ -1,7 +1,7 @@
 # OpsPilot — TASKS.md
 ## Autonomous Build Task Registry
 ## Last Updated: 2026-02-19
-## Total Progress: 26 / 48 units complete
+## Total Progress: 27 / 48 units complete
 ## Current Phase: 3 — QUOTING & INVOICING
 ## Build Status: IN PROGRESS
 
@@ -309,7 +309,7 @@ If all tasks in a phase are done → run Phase Gate → proceed to next phase.
 ## PHASE 3: QUOTING & INVOICING
 
 ### Unit 3.1 — Quote Builder
-- [ ] Quotes tRPC router + line item builder UI
+- [x] Quotes tRPC router + line item builder UI — quotesRouter (list/getById/create/update/updateStatus/delete/getStats), list page with DataTable/status filter/search, quote builder with customer search, dynamic line items, tax calc, totals
   - ACTION: `src/server/trpc/routers/quotes.ts`, quote builder component (customer selector, dynamic line items, subtotal+tax+total, Save Draft + Send)
   - VERIFY: Line items calc, add/remove rows, validation prevents empty
   - NOTES:

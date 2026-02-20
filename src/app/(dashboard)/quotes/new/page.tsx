@@ -28,7 +28,7 @@ import { Separator } from "@/components/ui/separator";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { Plus, Trash2 } from "lucide-react";
+import { Plus, Trash2, Sparkles } from "lucide-react";
 import { formatCurrency } from "@/lib/utils";
 import { useDebounce } from "@/lib/hooks/use-debounce";
 
@@ -46,6 +46,28 @@ export default function NewQuotePage() {
     { take: 50, skip: 0 },
     { enabled: true }
   );
+
+  const [aiDescription, setAiDescription] = useState("");
+  const [aiCategory, setAiCategory] = useState("HVAC");
+
+  const suggestMutation = api.quotes.suggestLineItems.useMutation({
+    onSuccess: (result) => {
+      // Replace or append line items
+      const newItems = result.lineItems.map((item) => ({
+        description: item.description,
+        quantity: item.quantity,
+        unitPriceCents: item.unitPriceCents,
+      }));
+      form.setValue("lineItems", newItems);
+      if (result.notes) {
+        form.setValue("notes", result.notes);
+      }
+      toast.success(result.mock ? "Mock suggestions loaded (no API key)" : "AI suggestions applied!");
+    },
+    onError: (err) => {
+      toast.error("AI suggestion failed: " + err.message);
+    },
+  });
 
   const createMutation = api.quotes.create.useMutation({
     onSuccess: (quote) => {
@@ -183,6 +205,66 @@ export default function NewQuotePage() {
                 <Input id="validUntil" type="date" {...form.register("validUntil")} />
               </div>
             </div>
+          </CardContent>
+        </Card>
+
+        {/* AI Suggest */}
+        <Card className="border-dashed border-primary/40 bg-primary/5">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-base">
+              <Sparkles className="h-4 w-4 text-primary" />
+              AI Line Item Suggestions
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-end">
+              <div className="flex-1 space-y-1">
+                <Label htmlFor="aiDescription" className="text-sm">
+                  Describe the job
+                </Label>
+                <Input
+                  id="aiDescription"
+                  placeholder="e.g. AC unit not cooling, needs refrigerant and tune-up"
+                  value={aiDescription}
+                  onChange={(e) => setAiDescription(e.target.value)}
+                />
+              </div>
+              <div className="space-y-1">
+                <Label htmlFor="aiCategory" className="text-sm">
+                  Category
+                </Label>
+                <Select value={aiCategory} onValueChange={setAiCategory}>
+                  <SelectTrigger id="aiCategory" className="w-40">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="HVAC">HVAC</SelectItem>
+                    <SelectItem value="PLUMBING">Plumbing</SelectItem>
+                    <SelectItem value="ELECTRICAL">Electrical</SelectItem>
+                    <SelectItem value="ROOFING">Roofing</SelectItem>
+                    <SelectItem value="OTHER">Other</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <Button
+                type="button"
+                variant="default"
+                disabled={suggestMutation.isPending || aiDescription.length < 5}
+                onClick={() =>
+                  suggestMutation.mutate({
+                    jobDescription: aiDescription,
+                    category: aiCategory,
+                    customerType: "RESIDENTIAL",
+                  })
+                }
+              >
+                <Sparkles className="mr-2 h-4 w-4" />
+                {suggestMutation.isPending ? "Thinking..." : "AI Suggest"}
+              </Button>
+            </div>
+            <p className="mt-2 text-xs text-muted-foreground">
+              AI will suggest line items based on the job description. You can edit them after.
+            </p>
           </CardContent>
         </Card>
 

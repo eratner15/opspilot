@@ -5,6 +5,13 @@ import { generateId } from "@/lib/utils";
 import { TRPCError } from "@trpc/server";
 import type { Db } from "@/lib/db";
 import type { LineItem } from "@/lib/validations/quote";
+import { callClaudeJSON } from "@/server/services/ai/claude";
+import {
+  QUOTE_ASSIST_SYSTEM,
+  buildQuoteAssistPrompt,
+  type QuoteAssistResult,
+} from "@/server/services/ai/prompts/quote-assist";
+import { getCloudflareContext } from "@opennextjs/cloudflare";
 
 async function auditLog(
   ctx: { db: Db; userId: string; organizationId: string },
@@ -227,6 +234,50 @@ export const quotesRouter = router({
       });
 
       return { success: true };
+    }),
+
+  suggestLineItems: protectedProcedure
+    .input(
+      z.object({
+        jobDescription: z.string().min(5, "Description required"),
+        category: z.string().default("OTHER"),
+        customerType: z.string().default("RESIDENTIAL"),
+      })
+    )
+    .mutation(async ({ input }) => {
+      // Get API key from Cloudflare env
+      let apiKey: string | undefined;
+      try {
+        const { env } = await getCloudflareContext();
+        apiKey = env.ANTHROPIC_API_KEY;
+      } catch {
+        // local dev — fall through to mock
+      }
+
+      if (!apiKey) {
+        // Return mock suggestions when no API key
+        return {
+          lineItems: [
+            { description: "Service call & diagnostic", quantity: 1, unitPriceCents: 9900 },
+            { description: "Labor — repair work", quantity: 2, unitPriceCents: 12500 },
+            { description: "Parts & materials", quantity: 1, unitPriceCents: 7500 },
+          ],
+          notes: "Prices are estimates. Final cost may vary based on parts availability.",
+          mock: true,
+        };
+      }
+
+      const result = await callClaudeJSON<QuoteAssistResult>(
+        apiKey,
+        [{ role: "user", content: buildQuoteAssistPrompt(input) }],
+        { systemPrompt: QUOTE_ASSIST_SYSTEM, maxTokens: 1024 }
+      );
+
+      return {
+        lineItems: result.lineItems,
+        notes: result.notes,
+        mock: false,
+      };
     }),
 
   getStats: protectedProcedure.query(async ({ ctx }) => {
