@@ -1,8 +1,8 @@
 # OpsPilot — TASKS.md
 ## Autonomous Build Task Registry
 ## Last Updated: 2026-02-19
-## Total Progress: 38 / 48 units complete
-## Current Phase: 3 — QUOTING & INVOICING
+## Total Progress: 39 / 48 units complete
+## Current Phase: 5 — POLISH & SECURITY
 ## Build Status: IN PROGRESS
 
 ---
@@ -405,7 +405,7 @@ If all tasks in a phase are done → run Phase Gate → proceed to next phase.
 ## PHASE 5: POLISH & SECURITY
 
 ### Unit 5.1 — Audit Logging Middleware
-- [ ] Comprehensive audit logging on all mutations
+- [x] Comprehensive audit logging on all mutations — centralized audit.ts with PII redaction (phone/email/name/address), never-throw wrapper, all 6 routers updated to import from service; tsc clean
   - ACTION: `src/server/services/audit.ts`, add to every mutation, redact PII
   - VERIFY: Every mutation logs, no PII
   - NOTES:
