@@ -2,7 +2,6 @@ import { getCloudflareContext } from '@opennextjs/cloudflare';
 import { createDb } from '@/lib/db';
 import { parseFormBody, validateTwilioSignature, buildTwiML } from '@/server/services/twilio/validate';
 
-export const runtime = 'edge';
 
 export async function POST(req: Request): Promise<Response> {
   const body = await req.text();

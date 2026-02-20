@@ -5,7 +5,6 @@ import { constructWebhookEvent } from "@/server/services/stripe/payments";
 import { generateId } from "@/lib/utils";
 import type Stripe from "stripe";
 
-export const runtime = "edge";
 
 export async function POST(req: Request) {
   const signature = req.headers.get("stripe-signature");

@@ -4,7 +4,6 @@ import { createDb } from "@/lib/db";
 import { sendEmail, buildInvoiceEmailHtml } from "@/server/services/email";
 import { formatCurrency, formatDate } from "@/lib/utils";
 
-export const runtime = "edge";
 
 /**
  * Cron: Daily overdue invoice reminder emails.

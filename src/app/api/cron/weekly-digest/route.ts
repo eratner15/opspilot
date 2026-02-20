@@ -6,7 +6,6 @@ import { callClaude } from "@/server/services/ai/claude";
 import { buildWeeklyDigestPrompt, WEEKLY_DIGEST_SYSTEM } from "@/server/services/ai/prompts/weekly-digest";
 import { formatCurrency } from "@/lib/utils";
 
-export const runtime = "edge";
 
 /**
  * Cron: Weekly digest email to org OWNER users.

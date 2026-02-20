@@ -7,7 +7,6 @@ import { buildClassifierPrompt, CLASSIFIER_SYSTEM_PROMPT, type ClassifierResult 
 import { mockClassifierResult } from '@/server/services/ai/mock';
 import { dispatchJob } from '@/server/services/dispatch';
 
-export const runtime = 'edge';
 
 const uuidSchema = z.string().uuid();
 

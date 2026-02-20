@@ -3,7 +3,6 @@ import { createDb } from '@/lib/db';
 import { parseFormBody, validateTwilioSignature, buildTwiML } from '@/server/services/twilio/validate';
 import { sendDispatchSms, matchTechnician } from '@/server/services/dispatch';
 
-export const runtime = 'edge';
 
 export async function POST(req: Request): Promise<Response> {
   const body = await req.text();
