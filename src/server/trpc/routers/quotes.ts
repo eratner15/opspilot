@@ -12,6 +12,8 @@ import {
   type QuoteAssistResult,
 } from "@/server/services/ai/prompts/quote-assist";
 import { getCloudflareContext } from "@opennextjs/cloudflare";
+import { sendEmail, buildQuoteEmailHtml } from "@/server/services/email";
+import { formatCurrency, formatDate } from "@/lib/utils";
 
 async function auditLog(
   ctx: { db: Db; userId: string; organizationId: string },
@@ -234,6 +236,69 @@ export const quotesRouter = router({
       });
 
       return { success: true };
+    }),
+
+  sendQuote: protectedProcedure
+    .input(z.object({ id: z.string() }))
+    .mutation(async ({ ctx, input }) => {
+      const quote = await ctx.db.quote.findFirst({
+        where: { id: input.id, organizationId: ctx.organizationId },
+        include: {
+          customer: { select: { firstName: true, lastName: true, email: true } },
+          organization: { select: { name: true } },
+        },
+      });
+      if (!quote) throw new TRPCError({ code: "NOT_FOUND", message: "Quote not found" });
+      if (!["DRAFT", "SENT"].includes(quote.status)) {
+        throw new TRPCError({ code: "BAD_REQUEST", message: "Quote cannot be sent in its current state" });
+      }
+      if (!quote.customer.email) {
+        throw new TRPCError({ code: "BAD_REQUEST", message: "Customer has no email address" });
+      }
+
+      let resendApiKey: string | undefined;
+      let appUrl = "https://smb.cafecito-ai.com";
+      try {
+        const { env } = await getCloudflareContext();
+        const cfEnv = env as unknown as Record<string, string | undefined>;
+        resendApiKey = cfEnv.RESEND_API_KEY;
+        if (cfEnv.NEXT_PUBLIC_APP_URL) {
+          appUrl = cfEnv.NEXT_PUBLIC_APP_URL;
+        }
+      } catch {
+        // local dev
+      }
+
+      const publicUrl = `${appUrl}/quote/${quote.publicToken}`;
+      const customerName = `${quote.customer.firstName} ${quote.customer.lastName}`;
+
+      await sendEmail(resendApiKey, {
+        to: quote.customer.email,
+        subject: `Quote ${quote.quoteNumber} from ${quote.organization.name}`,
+        html: buildQuoteEmailHtml({
+          customerName,
+          quoteNumber: quote.quoteNumber,
+          total: formatCurrency(quote.totalCents),
+          validUntil: quote.validUntil ? formatDate(quote.validUntil) : undefined,
+          publicUrl,
+          orgName: quote.organization.name,
+        }),
+      });
+
+      const updated = await ctx.db.quote.update({
+        where: { id: input.id },
+        data: {
+          status: "SENT",
+          sentAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+        },
+      });
+
+      await auditLog(ctx, "quote.send", "Quote", input.id, {
+        status: { from: quote.status, to: "SENT" },
+      });
+
+      return updated;
     }),
 
   suggestLineItems: protectedProcedure

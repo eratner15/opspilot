@@ -1,7 +1,7 @@
 # OpsPilot — TASKS.md
 ## Autonomous Build Task Registry
 ## Last Updated: 2026-02-19
-## Total Progress: 27 / 48 units complete
+## Total Progress: 28 / 48 units complete
 ## Current Phase: 3 — QUOTING & INVOICING
 ## Build Status: IN PROGRESS
 
@@ -315,7 +315,7 @@ If all tasks in a phase are done → run Phase Gate → proceed to next phase.
   - NOTES:
 
 ### Unit 3.2 — AI Quote Assist
-- [ ] Claude-powered line item suggestions
+- [x] Claude-powered line item suggestions — quote-assist.ts prompt, suggestLineItems tRPC mutation, AI Suggest button in quote builder with mock fallback
   - ACTION: `src/server/services/ai/prompts/quote-assist.ts`, "AI Suggest" button, editable suggestions
   - VERIFY: Returns reasonable items, editable, loading state
   - NOTES:
