@@ -1,7 +1,7 @@
 # OpsPilot — TASKS.md
 ## Autonomous Build Task Registry
 ## Last Updated: 2026-02-19
-## Total Progress: 40 / 48 units complete
+## Total Progress: 41 / 48 units complete
 ## Current Phase: 5 — POLISH & SECURITY
 ## Build Status: IN PROGRESS
 
@@ -418,7 +418,7 @@ If all tasks in a phase are done → run Phase Gate → proceed to next phase.
   - NOTES:
 
 ### Unit 5.3 — Webhook Signature Verification
-- [ ] Verify signatures on all webhooks
+- [x] Verify signatures on all webhooks — audited Twilio (voice/gather/sms) + Stripe; all return 401 for invalid sigs; no Clerk webhook needed
   - ACTION: Audit ALL webhook routes — Twilio, Stripe, Clerk. 401 for invalid.
   - VERIFY: Invalid sigs→401, valid pass through
   - NOTES:
