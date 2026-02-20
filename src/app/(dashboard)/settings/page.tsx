@@ -46,6 +46,9 @@ import {
   Phone,
   Mail,
   Zap,
+  Copy,
+  Check,
+  ExternalLink,
 } from "lucide-react";
 
 // ─── Org Profile Tab ──────────────────────────────────────────────────────────
@@ -339,6 +342,12 @@ function TeamTab() {
 
 function BillingTab() {
   const { data: org, isLoading } = api.settings.getOrg.useQuery();
+  const billingMutation = api.settings.createBillingPortalSession.useMutation({
+    onSuccess: ({ url }) => {
+      window.location.href = url;
+    },
+    onError: (err) => toast.error(err.message),
+  });
 
   if (isLoading) return <LoadingSkeleton variant="card" />;
 
@@ -374,14 +383,31 @@ function BillingTab() {
                 {org?.planStatus ?? "ACTIVE"}
               </span>
             </div>
-            <Button variant="outline" disabled>
-              <CreditCard className="mr-2 h-4 w-4" />
-              Manage Billing
+            <Button
+              variant="outline"
+              onClick={() => billingMutation.mutate()}
+              disabled={billingMutation.isPending || !org?.stripeCustomerId}
+              title={!org?.stripeCustomerId ? "No Stripe customer on file" : undefined}
+            >
+              {billingMutation.isPending ? (
+                "Redirecting..."
+              ) : (
+                <>
+                  <CreditCard className="mr-2 h-4 w-4" />
+                  Manage Billing
+                  <ExternalLink className="ml-2 h-3 w-3" />
+                </>
+              )}
             </Button>
           </div>
           {org?.stripeCustomerId && (
             <p className="text-xs text-muted-foreground">
               Stripe ID: {org.stripeCustomerId}
+            </p>
+          )}
+          {!org?.stripeCustomerId && (
+            <p className="text-xs text-muted-foreground">
+              No Stripe customer on file. Contact support to activate billing.
             </p>
           )}
         </CardContent>
@@ -417,60 +443,96 @@ function BillingTab() {
 
 // ─── Integrations Tab ─────────────────────────────────────────────────────────
 
-type IntegrationStatus = "connected" | "not_configured" | "optional";
-
-function IntegrationCard({
-  name,
-  description,
-  status,
-  icon: Icon,
-  detail,
-}: {
-  name: string;
-  description: string;
-  status: IntegrationStatus;
-  icon: React.ElementType;
-  detail?: string;
-}) {
+function CopyButton({ text }: { text: string }) {
+  const [copied, setCopied] = useState(false);
+  const handleCopy = async () => {
+    await navigator.clipboard.writeText(text);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
   return (
-    <Card>
-      <CardContent className="pt-6">
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-          <div className="flex items-start gap-3">
-            <div className="rounded-lg bg-muted p-2 shrink-0">
-              <Icon className="h-5 w-5" />
-            </div>
-            <div className="space-y-1">
-              <p className="font-medium">{name}</p>
-              <p className="text-sm text-muted-foreground">{description}</p>
-              {detail && <p className="text-xs text-muted-foreground font-mono">{detail}</p>}
-            </div>
-          </div>
-          <div className="ml-10 sm:ml-0 shrink-0">
-            {status === "connected" ? (
-              <div className="flex items-center gap-1.5 text-green-600">
-                <CheckCircle2 className="h-4 w-4" />
-                <span className="text-xs font-medium">Connected</span>
-              </div>
-            ) : status === "optional" ? (
-              <div className="flex items-center gap-1.5 text-muted-foreground">
-                <XCircle className="h-4 w-4" />
-                <span className="text-xs">Optional</span>
-              </div>
-            ) : (
-              <div className="flex items-center gap-1.5 text-amber-600">
-                <XCircle className="h-4 w-4" />
-                <span className="text-xs font-medium">Not configured</span>
-              </div>
-            )}
-          </div>
-        </div>
-      </CardContent>
-    </Card>
+    <Button
+      type="button"
+      variant="ghost"
+      size="sm"
+      onClick={handleCopy}
+      className="h-7 px-2 text-xs gap-1"
+    >
+      {copied ? <Check className="h-3 w-3 text-green-500" /> : <Copy className="h-3 w-3" />}
+      {copied ? "Copied" : "Copy"}
+    </Button>
+  );
+}
+
+function WebhookUrl({ url }: { url: string }) {
+  return (
+    <div className="flex items-center gap-2 mt-2">
+      <code className="text-xs bg-muted rounded px-2 py-1 flex-1 break-all font-mono">{url}</code>
+      <CopyButton text={url} />
+    </div>
+  );
+}
+
+const twilioPhoneSchema = z.object({
+  twilioPhone: z
+    .string()
+    .regex(/^\+1\d{10}$/, "Format: +1XXXXXXXXXX")
+    .or(z.literal("")),
+});
+type TwilioPhoneForm = z.infer<typeof twilioPhoneSchema>;
+
+function TwilioPhoneField({ currentPhone, orgName }: { currentPhone?: string | null; orgName: string }) {
+  const { refetch } = api.settings.getOrg.useQuery();
+  const updateMutation = api.settings.updateOrg.useMutation({
+    onSuccess: () => {
+      toast.success("AI phone number updated");
+      void refetch();
+    },
+    onError: (err) => toast.error(err.message),
+  });
+
+  const form = useForm<TwilioPhoneForm>({
+    resolver: zodResolver(twilioPhoneSchema),
+    values: { twilioPhone: currentPhone ?? "" },
+  });
+
+  return (
+    <Form {...form}>
+      <form
+        onSubmit={form.handleSubmit((data) =>
+          updateMutation.mutate({ name: orgName, twilioPhone: data.twilioPhone })
+        )}
+        className="mt-3 flex items-end gap-2"
+      >
+        <FormField
+          control={form.control}
+          name="twilioPhone"
+          render={({ field }) => (
+            <FormItem className="flex-1">
+              <FormLabel className="text-xs">AI Phone Number</FormLabel>
+              <FormControl>
+                <Input placeholder="+18135550199" className="h-8 text-sm" {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <Button type="submit" size="sm" className="h-8" disabled={updateMutation.isPending}>
+          {updateMutation.isPending ? "Saving..." : "Save"}
+        </Button>
+      </form>
+    </Form>
   );
 }
 
 function IntegrationsTab() {
+  const { data: org } = api.settings.getOrg.useQuery();
+  const { data: status, isLoading } = api.settings.getIntegrationStatus.useQuery();
+
+  if (isLoading) return <LoadingSkeleton variant="card" />;
+
+  const isConnected = (flag: boolean | undefined) => !!flag;
+
   return (
     <div className="space-y-4">
       <Card>
@@ -483,34 +545,127 @@ function IntegrationsTab() {
         </CardHeader>
       </Card>
 
-      <IntegrationCard
-        name="Twilio Voice & SMS"
-        description="AI-powered call answering and SMS dispatch to technicians."
-        status="connected"
-        icon={Phone}
-        detail="TWILIO_ACCOUNT_SID · TWILIO_AUTH_TOKEN · TWILIO_PHONE_NUMBER"
-      />
-      <IntegrationCard
-        name="Stripe Payments"
-        description="Accept online payments for invoices via Stripe Checkout."
-        status="connected"
-        icon={CreditCard}
-        detail="STRIPE_SECRET_KEY · STRIPE_WEBHOOK_SECRET · NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY"
-      />
-      <IntegrationCard
-        name="Anthropic Claude AI"
-        description="Powers call transcription, job classification, and quote suggestions."
-        status="connected"
-        icon={Zap}
-        detail="ANTHROPIC_API_KEY"
-      />
-      <IntegrationCard
-        name="Resend Email"
-        description="Transactional emails for quotes, invoices, and weekly digests."
-        status="optional"
-        icon={Mail}
-        detail="RESEND_API_KEY (optional — emails are mocked if absent)"
-      />
+      {/* Twilio */}
+      <Card>
+        <CardContent className="pt-6 space-y-3">
+          <div className="flex items-start justify-between gap-3">
+            <div className="flex items-start gap-3">
+              <div className="rounded-lg bg-muted p-2 shrink-0">
+                <Phone className="h-5 w-5" />
+              </div>
+              <div>
+                <p className="font-medium">Twilio Voice & SMS</p>
+                <p className="text-sm text-muted-foreground">
+                  AI-powered call answering and SMS dispatch to technicians.
+                </p>
+                <p className="text-xs text-muted-foreground font-mono mt-1">
+                  TWILIO_ACCOUNT_SID · TWILIO_AUTH_TOKEN · TWILIO_PHONE_NUMBER
+                </p>
+              </div>
+            </div>
+            <StatusBadge connected={isConnected(status?.twilio)} />
+          </div>
+          <div className="ml-11 space-y-2">
+            <div>
+              <p className="text-xs text-muted-foreground font-medium">Voice Webhook URL</p>
+              <WebhookUrl url="https://smb.cafecito-ai.com/api/webhooks/twilio/voice" />
+            </div>
+            <TwilioPhoneField currentPhone={org?.twilioPhone} orgName={org?.name ?? ""} />
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Stripe */}
+      <Card>
+        <CardContent className="pt-6 space-y-3">
+          <div className="flex items-start justify-between gap-3">
+            <div className="flex items-start gap-3">
+              <div className="rounded-lg bg-muted p-2 shrink-0">
+                <CreditCard className="h-5 w-5" />
+              </div>
+              <div>
+                <p className="font-medium">Stripe Payments</p>
+                <p className="text-sm text-muted-foreground">
+                  Accept online payments for invoices via Stripe Checkout.
+                </p>
+                <p className="text-xs text-muted-foreground font-mono mt-1">
+                  STRIPE_SECRET_KEY · STRIPE_WEBHOOK_SECRET · NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY
+                </p>
+              </div>
+            </div>
+            <StatusBadge connected={isConnected(status?.stripe)} />
+          </div>
+          <div className="ml-11">
+            <p className="text-xs text-muted-foreground font-medium">Stripe Webhook URL</p>
+            <WebhookUrl url="https://smb.cafecito-ai.com/api/webhooks/stripe" />
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Anthropic */}
+      <Card>
+        <CardContent className="pt-6">
+          <div className="flex items-start justify-between gap-3">
+            <div className="flex items-start gap-3">
+              <div className="rounded-lg bg-muted p-2 shrink-0">
+                <Zap className="h-5 w-5" />
+              </div>
+              <div>
+                <p className="font-medium">Anthropic Claude AI</p>
+                <p className="text-sm text-muted-foreground">
+                  Powers call transcription, job classification, and quote suggestions.
+                </p>
+                <p className="text-xs text-muted-foreground font-mono mt-1">ANTHROPIC_API_KEY</p>
+              </div>
+            </div>
+            <StatusBadge connected={isConnected(status?.anthropic)} />
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Resend */}
+      <Card>
+        <CardContent className="pt-6">
+          <div className="flex items-start justify-between gap-3">
+            <div className="flex items-start gap-3">
+              <div className="rounded-lg bg-muted p-2 shrink-0">
+                <Mail className="h-5 w-5" />
+              </div>
+              <div>
+                <p className="font-medium">Resend Email</p>
+                <p className="text-sm text-muted-foreground">
+                  Transactional emails for quotes, invoices, and weekly digests.
+                </p>
+                <p className="text-xs text-muted-foreground font-mono mt-1">
+                  RESEND_API_KEY (optional — emails are mocked if absent)
+                </p>
+              </div>
+            </div>
+            {status?.resend ? (
+              <StatusBadge connected={true} />
+            ) : (
+              <div className="flex items-center gap-1.5 text-muted-foreground shrink-0">
+                <XCircle className="h-4 w-4" />
+                <span className="text-xs">Optional</span>
+              </div>
+            )}
+          </div>
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
+
+function StatusBadge({ connected }: { connected: boolean }) {
+  return connected ? (
+    <div className="flex items-center gap-1.5 text-green-600 shrink-0">
+      <CheckCircle2 className="h-4 w-4" />
+      <span className="text-xs font-medium">Connected</span>
+    </div>
+  ) : (
+    <div className="flex items-center gap-1.5 text-amber-600 shrink-0">
+      <XCircle className="h-4 w-4" />
+      <span className="text-xs font-medium">Not configured</span>
     </div>
   );
 }

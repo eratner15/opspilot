@@ -9,7 +9,7 @@ import { toast } from "sonner";
 import { api } from "@/lib/trpc/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import {
   Form,
   FormControl,
@@ -18,7 +18,7 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
-import { Zap, Building2, HardHat, LayoutDashboard, CheckCircle2, ArrowRight } from "lucide-react";
+import { Zap, Building2, Phone, HardHat, LayoutDashboard, CheckCircle2, ArrowRight, Copy, Check } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { TRPCProvider } from "@/components/providers/trpc-provider";
 import { Toaster } from "sonner";
@@ -28,9 +28,12 @@ import { Toaster } from "sonner";
 const steps = [
   { id: 1, title: "Welcome", icon: Zap, description: "You're all set to transform your operations" },
   { id: 2, title: "Your Business", icon: Building2, description: "Tell us about your company" },
-  { id: 3, title: "First Technician", icon: HardHat, description: "Add your first tech to get dispatching" },
-  { id: 4, title: "Ready!", icon: LayoutDashboard, description: "You're ready to launch" },
+  { id: 3, title: "AI Phone", icon: Phone, description: "Connect your AI phone number" },
+  { id: 4, title: "First Technician", icon: HardHat, description: "Add your first tech to get dispatching" },
+  { id: 5, title: "Ready!", icon: LayoutDashboard, description: "You're ready to launch" },
 ];
+
+const TWILIO_WEBHOOK_URL = "https://smb.cafecito-ai.com/api/webhooks/twilio/voice";
 
 // ─── Step 1: Welcome ──────────────────────────────────────────────────────────
 
@@ -167,12 +170,136 @@ function BusinessStep({ onNext }: { onNext: () => void }) {
   );
 }
 
-// ─── Step 3: First Technician ─────────────────────────────────────────────────
+// ─── Step 3: AI Phone Setup ───────────────────────────────────────────────────
+
+const phoneSetupSchema = z.object({
+  twilioPhone: z
+    .string()
+    .regex(/^\+1\d{10}$/, "Enter E.164 format: +1XXXXXXXXXX")
+    .or(z.literal("")),
+});
+type PhoneSetupForm = z.infer<typeof phoneSetupSchema>;
+
+function CopyButton({ text }: { text: string }) {
+  const [copied, setCopied] = useState(false);
+  const handleCopy = async () => {
+    await navigator.clipboard.writeText(text);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+  return (
+    <button
+      type="button"
+      onClick={handleCopy}
+      className="ml-2 shrink-0 text-muted-foreground hover:text-foreground transition-colors"
+      title="Copy to clipboard"
+    >
+      {copied ? <Check className="h-4 w-4 text-green-500" /> : <Copy className="h-4 w-4" />}
+    </button>
+  );
+}
+
+function AIPhoneStep({ onNext }: { onNext: () => void }) {
+  const { data: org } = api.settings.getOrg.useQuery();
+  const updateMutation = api.settings.updateOrg.useMutation({
+    onSuccess: () => {
+      toast.success("AI phone number saved!");
+      onNext();
+    },
+    onError: (err) => toast.error(err.message),
+  });
+
+  const form = useForm<PhoneSetupForm>({
+    resolver: zodResolver(phoneSetupSchema),
+    defaultValues: { twilioPhone: "" },
+  });
+
+  return (
+    <div className="space-y-6">
+      <div className="text-center space-y-2">
+        <h2 className="text-2xl font-bold">Set Up Your AI Phone Number</h2>
+        <p className="text-muted-foreground text-sm max-w-sm mx-auto">
+          This is the Twilio number callers will dial. OpsPilot answers it automatically.
+        </p>
+      </div>
+
+      <div className="rounded-lg border bg-muted/50 p-4 space-y-2">
+        <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+          Step 1 — Buy a Twilio number at twilio.com
+        </p>
+        <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground mt-3">
+          Step 2 — Set this webhook URL on your Twilio number:
+        </p>
+        <div className="flex items-center gap-2 mt-1">
+          <code className="text-xs bg-background border rounded px-2 py-1 flex-1 break-all">
+            {TWILIO_WEBHOOK_URL}
+          </code>
+          <CopyButton text={TWILIO_WEBHOOK_URL} />
+        </div>
+        <p className="text-xs text-muted-foreground">
+          In Twilio Console → Phone Numbers → Active Numbers → your number → Voice Configuration → Webhook (HTTP POST)
+        </p>
+      </div>
+
+      <Form {...form}>
+        <form
+          onSubmit={form.handleSubmit((data) => {
+            if (data.twilioPhone && org) {
+              updateMutation.mutate({ name: org.name, twilioPhone: data.twilioPhone });
+            } else {
+              onNext();
+            }
+          })}
+          className="space-y-4"
+        >
+          <FormField
+            control={form.control}
+            name="twilioPhone"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Your Twilio Phone Number</FormLabel>
+                <FormControl>
+                  <Input placeholder="+18135550199" {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <div className="flex gap-3 pt-2">
+            <Button type="submit" className="flex-1" disabled={updateMutation.isPending}>
+              {updateMutation.isPending ? "Saving..." : "Save & Continue"}
+              <ArrowRight className="ml-2 h-4 w-4" />
+            </Button>
+          </div>
+          <Button
+            type="button"
+            variant="ghost"
+            className="w-full text-muted-foreground"
+            onClick={onNext}
+          >
+            Skip for now
+          </Button>
+        </form>
+      </Form>
+    </div>
+  );
+}
+
+// ─── Step 4: First Technician ─────────────────────────────────────────────────
+
+const TRADE_SKILLS = [
+  { value: "HVAC", label: "HVAC" },
+  { value: "Plumbing", label: "Plumbing" },
+  { value: "Electrical", label: "Electrical" },
+  { value: "Roofing", label: "Roofing" },
+  { value: "Appliance Repair", label: "Appliance Repair" },
+];
 
 const techSchema = z.object({
   firstName: z.string().min(1, "First name required"),
   lastName: z.string().min(1, "Last name required"),
   phone: z.string().min(10, "Valid phone required"),
+  skills: z.array(z.string()).min(1, "Select at least one skill"),
 });
 type TechForm = z.infer<typeof techSchema>;
 
@@ -187,8 +314,19 @@ function TechnicianStep({ onNext }: { onNext: () => void }) {
 
   const form = useForm<TechForm>({
     resolver: zodResolver(techSchema),
-    defaultValues: { firstName: "", lastName: "", phone: "" },
+    defaultValues: { firstName: "", lastName: "", phone: "", skills: ["HVAC"] },
   });
+
+  const selectedSkills = form.watch("skills");
+
+  const toggleSkill = (value: string) => {
+    const current = form.getValues("skills");
+    if (current.includes(value)) {
+      form.setValue("skills", current.filter((s) => s !== value), { shouldValidate: true });
+    } else {
+      form.setValue("skills", [...current, value], { shouldValidate: true });
+    }
+  };
 
   return (
     <div className="space-y-6">
@@ -206,7 +344,7 @@ function TechnicianStep({ onNext }: { onNext: () => void }) {
               lastName: data.lastName,
               phone: data.phone,
               type: "EMPLOYEE",
-              skillsJson: JSON.stringify(["HVAC"]),
+              skillsJson: JSON.stringify(data.skills),
               status: "ACTIVE",
             })
           )}
@@ -253,6 +391,33 @@ function TechnicianStep({ onNext }: { onNext: () => void }) {
               </FormItem>
             )}
           />
+          <FormField
+            control={form.control}
+            name="skills"
+            render={() => (
+              <FormItem>
+                <FormLabel>Trade Skills *</FormLabel>
+                <div className="flex flex-wrap gap-2 pt-1">
+                  {TRADE_SKILLS.map((skill) => (
+                    <button
+                      key={skill.value}
+                      type="button"
+                      onClick={() => toggleSkill(skill.value)}
+                      className={cn(
+                        "rounded-full border px-3 py-1 text-xs font-medium transition-colors",
+                        selectedSkills.includes(skill.value)
+                          ? "bg-blue-600 text-white border-blue-600"
+                          : "bg-background text-muted-foreground border-border hover:border-blue-400"
+                      )}
+                    >
+                      {skill.label}
+                    </button>
+                  ))}
+                </div>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
           <div className="flex gap-3 pt-2">
             <Button type="submit" className="flex-1" disabled={createMutation.isPending}>
               {createMutation.isPending ? "Adding..." : "Add Technician"}
@@ -273,7 +438,7 @@ function TechnicianStep({ onNext }: { onNext: () => void }) {
   );
 }
 
-// ─── Step 4: Ready ────────────────────────────────────────────────────────────
+// ─── Step 5: Ready ────────────────────────────────────────────────────────────
 
 function ReadyStep({ onFinish }: { onFinish: () => void }) {
   return (
@@ -350,7 +515,7 @@ function OnboardingContent() {
                 {i < steps.length - 1 && (
                   <div
                     className={cn(
-                      "h-0.5 w-8 mx-1 transition-colors",
+                      "h-0.5 w-6 mx-1 transition-colors",
                       isCompleted ? "bg-green-500" : "bg-muted"
                     )}
                   />
@@ -370,8 +535,9 @@ function OnboardingContent() {
           <CardContent className="pt-8 pb-8 px-6 sm:px-8">
             {currentStep === 1 && <WelcomeStep onNext={goNext} />}
             {currentStep === 2 && <BusinessStep onNext={goNext} />}
-            {currentStep === 3 && <TechnicianStep onNext={goNext} />}
-            {currentStep === 4 && <ReadyStep onFinish={handleFinish} />}
+            {currentStep === 3 && <AIPhoneStep onNext={goNext} />}
+            {currentStep === 4 && <TechnicianStep onNext={goNext} />}
+            {currentStep === 5 && <ReadyStep onFinish={handleFinish} />}
           </CardContent>
         </Card>
 

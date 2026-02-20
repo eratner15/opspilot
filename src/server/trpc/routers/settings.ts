@@ -2,6 +2,8 @@ import { router, protectedProcedure } from "../trpc";
 import { z } from "zod";
 import { TRPCError } from "@trpc/server";
 import { createAuditLog } from "@/server/services/audit";
+import { getCloudflareContext } from "@opennextjs/cloudflare";
+import { createBillingPortalSession } from "@/server/services/stripe/billing";
 
 const updateOrgSchema = z.object({
   name: z.string().min(1).max(100),
@@ -12,6 +14,7 @@ const updateOrgSchema = z.object({
   state: z.string().optional(),
   zip: z.string().optional(),
   timezone: z.string().optional(),
+  twilioPhone: z.string().optional(),
 });
 
 export const settingsRouter = router({
@@ -38,6 +41,7 @@ export const settingsRouter = router({
           state: input.state || null,
           zip: input.zip || null,
           timezone: input.timezone || "America/New_York",
+          ...(input.twilioPhone !== undefined && { twilioPhone: input.twilioPhone || null }),
           updatedAt: now,
         },
       });
@@ -79,4 +83,55 @@ export const settingsRouter = router({
       });
       return updated;
     }),
+
+  getIntegrationStatus: protectedProcedure.query(async () => {
+    try {
+      const { env } = await getCloudflareContext();
+      return {
+        twilio: !!(env.TWILIO_ACCOUNT_SID && env.TWILIO_AUTH_TOKEN && env.TWILIO_PHONE_NUMBER),
+        stripe: !!(env.STRIPE_SECRET_KEY && env.STRIPE_WEBHOOK_SECRET),
+        anthropic: !!env.ANTHROPIC_API_KEY,
+        resend: !!env.RESEND_API_KEY,
+      };
+    } catch {
+      // Local dev — assume not configured
+      return { twilio: false, stripe: false, anthropic: false, resend: false };
+    }
+  }),
+
+  createBillingPortalSession: protectedProcedure.mutation(async ({ ctx }) => {
+    const org = await ctx.db.organization.findFirst({
+      where: { id: ctx.organizationId },
+    });
+    if (!org) throw new TRPCError({ code: "NOT_FOUND", message: "Organization not found" });
+    if (!org.stripeCustomerId) {
+      throw new TRPCError({
+        code: "PRECONDITION_FAILED",
+        message: "No Stripe customer found. Contact support to set up billing.",
+      });
+    }
+
+    let stripeSecretKey: string | undefined;
+    try {
+      const { env } = await getCloudflareContext();
+      stripeSecretKey = env.STRIPE_SECRET_KEY;
+    } catch {
+      stripeSecretKey = undefined;
+    }
+
+    if (!stripeSecretKey) {
+      throw new TRPCError({
+        code: "PRECONDITION_FAILED",
+        message: "Stripe is not configured. Set STRIPE_SECRET_KEY in Worker settings.",
+      });
+    }
+
+    const { url } = await createBillingPortalSession({
+      stripeSecretKey,
+      stripeCustomerId: org.stripeCustomerId,
+      returnUrl: "https://smb.cafecito-ai.com/settings",
+    });
+
+    return { url };
+  }),
 });
