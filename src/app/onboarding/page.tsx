@@ -441,6 +441,13 @@ function TechnicianStep({ onNext }: { onNext: () => void }) {
 // ─── Step 5: Ready ────────────────────────────────────────────────────────────
 
 function ReadyStep({ onFinish }: { onFinish: () => void }) {
+  const upgradeMutation = api.settings.createSubscriptionCheckout.useMutation({
+    onSuccess: ({ url }) => {
+      window.location.href = url;
+    },
+    onError: (err) => toast.error(err.message),
+  });
+
   return (
     <div className="space-y-8 text-center">
       <div className="mx-auto w-20 h-20 bg-green-500 rounded-2xl flex items-center justify-center shadow-lg">
@@ -465,10 +472,21 @@ function ReadyStep({ onFinish }: { onFinish: () => void }) {
           </div>
         ))}
       </div>
-      <Button size="lg" onClick={onFinish} className="w-full max-w-sm">
-        <LayoutDashboard className="mr-2 h-5 w-5" />
-        Go to Dashboard
-      </Button>
+      <div className="flex flex-col gap-3 max-w-sm mx-auto">
+        <Button size="lg" onClick={onFinish} className="w-full">
+          <LayoutDashboard className="mr-2 h-5 w-5" />
+          Go to Dashboard
+        </Button>
+        <Button
+          size="lg"
+          variant="outline"
+          className="w-full"
+          disabled={upgradeMutation.isPending}
+          onClick={() => upgradeMutation.mutate()}
+        >
+          {upgradeMutation.isPending ? "Redirecting..." : "Start your subscription — $199/mo →"}
+        </Button>
+      </div>
     </div>
   );
 }

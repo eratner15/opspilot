@@ -37,8 +37,21 @@ export async function matchTechnician(
       }
     });
     if (skilled.length > 0) {
-      // Pick the one with fewest open jobs (simple load balancing)
-      return skilled[0]!.id;
+      // Pick the tech with fewest open jobs (load balancing)
+      const techJobCounts = await Promise.all(
+        skilled.map(async (t) => ({
+          id: t.id,
+          openJobs: await db.job.count({
+            where: {
+              organizationId,
+              technicianId: t.id,
+              status: { in: ['NEW', 'SCHEDULED', 'IN_PROGRESS'] },
+            },
+          }),
+        }))
+      );
+      techJobCounts.sort((a, b) => a.openJobs - b.openJobs);
+      return techJobCounts[0]!.id;
     }
   }
 

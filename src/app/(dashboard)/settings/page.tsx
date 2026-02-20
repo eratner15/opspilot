@@ -49,6 +49,8 @@ import {
   Copy,
   Check,
   ExternalLink,
+  Search,
+  Loader2,
 } from "lucide-react";
 
 // ─── Org Profile Tab ──────────────────────────────────────────────────────────
@@ -348,6 +350,12 @@ function BillingTab() {
     },
     onError: (err) => toast.error(err.message),
   });
+  const upgradeMutation = api.settings.createSubscriptionCheckout.useMutation({
+    onSuccess: ({ url }) => {
+      window.location.href = url;
+    },
+    onError: (err) => toast.error(err.message),
+  });
 
   if (isLoading) return <LoadingSkeleton variant="card" />;
 
@@ -363,6 +371,8 @@ function BillingTab() {
     PAST_DUE: "bg-red-100 text-red-800",
     CANCELLED: "bg-gray-100 text-gray-800",
   };
+
+  const isTrial = !org?.plan || org.plan === "TRIAL";
 
   return (
     <div className="space-y-6">
@@ -383,29 +393,53 @@ function BillingTab() {
                 {org?.planStatus ?? "ACTIVE"}
               </span>
             </div>
-            <Button
-              variant="outline"
-              onClick={() => billingMutation.mutate()}
-              disabled={billingMutation.isPending || !org?.stripeCustomerId}
-              title={!org?.stripeCustomerId ? "No Stripe customer on file" : undefined}
-            >
-              {billingMutation.isPending ? (
-                "Redirecting..."
-              ) : (
-                <>
-                  <CreditCard className="mr-2 h-4 w-4" />
-                  Manage Billing
-                  <ExternalLink className="ml-2 h-3 w-3" />
-                </>
+            <div className="flex flex-col gap-2 sm:flex-row">
+              {isTrial && (
+                <Button
+                  onClick={() => upgradeMutation.mutate()}
+                  disabled={upgradeMutation.isPending}
+                  className="bg-blue-600 hover:bg-blue-700"
+                >
+                  {upgradeMutation.isPending ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Redirecting...
+                    </>
+                  ) : (
+                    <>
+                      <Zap className="mr-2 h-4 w-4" />
+                      Upgrade to Starter — $199/mo
+                      <ExternalLink className="ml-2 h-3 w-3" />
+                    </>
+                  )}
+                </Button>
               )}
-            </Button>
+              {!isTrial && (
+                <Button
+                  variant="outline"
+                  onClick={() => billingMutation.mutate()}
+                  disabled={billingMutation.isPending || !org?.stripeCustomerId}
+                  title={!org?.stripeCustomerId ? "No Stripe customer on file" : undefined}
+                >
+                  {billingMutation.isPending ? (
+                    "Redirecting..."
+                  ) : (
+                    <>
+                      <CreditCard className="mr-2 h-4 w-4" />
+                      Manage Billing
+                      <ExternalLink className="ml-2 h-3 w-3" />
+                    </>
+                  )}
+                </Button>
+              )}
+            </div>
           </div>
           {org?.stripeCustomerId && (
             <p className="text-xs text-muted-foreground">
               Stripe ID: {org.stripeCustomerId}
             </p>
           )}
-          {!org?.stripeCustomerId && (
+          {!org?.stripeCustomerId && !isTrial && (
             <p className="text-xs text-muted-foreground">
               No Stripe customer on file. Contact support to activate billing.
             </p>
@@ -525,13 +559,198 @@ function TwilioPhoneField({ currentPhone, orgName }: { currentPhone?: string | n
   );
 }
 
+// ─── Unit 3: Twilio Number Picker ─────────────────────────────────────────────
+
+type TwilioNumber = {
+  friendlyName: string;
+  phoneNumber: string;
+  locality: string;
+  region: string;
+};
+
+function TwilioNumberPicker({ onNumberPurchased }: { onNumberPurchased: (phone: string) => void }) {
+  const [areaCode, setAreaCode] = useState("");
+  const [searchEnabled, setSearchEnabled] = useState(false);
+  const [purchasingNumber, setPurchasingNumber] = useState<string | null>(null);
+
+  const { data: numbers, isFetching } = api.settings.searchTwilioNumbers.useQuery(
+    { areaCode },
+    { enabled: searchEnabled && areaCode.length === 3 }
+  );
+
+  const purchaseMutation = api.settings.purchaseTwilioNumber.useMutation({
+    onSuccess: ({ phoneNumber }) => {
+      toast.success(`AI number ${phoneNumber} activated. Webhook configured automatically.`);
+      onNumberPurchased(phoneNumber);
+      setPurchasingNumber(null);
+    },
+    onError: (err) => {
+      toast.error(err.message);
+      setPurchasingNumber(null);
+    },
+  });
+
+  const handleSearch = () => {
+    if (areaCode.length === 3) {
+      setSearchEnabled(true);
+    }
+  };
+
+  return (
+    <div className="mt-3 space-y-3">
+      <p className="text-xs font-medium text-muted-foreground">Get an AI Phone Number</p>
+      <div className="flex items-end gap-2">
+        <div className="space-y-1">
+          <label className="text-xs text-muted-foreground">Area Code</label>
+          <Input
+            placeholder="813"
+            maxLength={3}
+            value={areaCode}
+            onChange={(e) => {
+              setAreaCode(e.target.value.replace(/\D/g, ""));
+              setSearchEnabled(false);
+            }}
+            className="h-8 w-24 text-sm"
+          />
+        </div>
+        <Button
+          size="sm"
+          variant="outline"
+          className="h-8"
+          onClick={handleSearch}
+          disabled={areaCode.length !== 3 || isFetching}
+        >
+          {isFetching ? (
+            <Loader2 className="h-3 w-3 animate-spin" />
+          ) : (
+            <Search className="h-3 w-3" />
+          )}
+          <span className="ml-1">Search</span>
+        </Button>
+      </div>
+
+      {searchEnabled && numbers && numbers.length === 0 && !isFetching && (
+        <p className="text-xs text-muted-foreground">No numbers available for area code {areaCode}. Try another.</p>
+      )}
+
+      {numbers && numbers.length > 0 && (
+        <div className="space-y-1.5">
+          {numbers.map((n: TwilioNumber) => (
+            <div
+              key={n.phoneNumber}
+              className="flex items-center justify-between rounded-md border px-3 py-2 text-sm"
+            >
+              <div>
+                <span className="font-mono font-medium">{n.friendlyName}</span>
+                <span className="ml-2 text-xs text-muted-foreground">
+                  {n.locality}, {n.region}
+                </span>
+              </div>
+              <Button
+                size="sm"
+                className="h-7 text-xs"
+                disabled={purchasingNumber !== null}
+                onClick={() => {
+                  setPurchasingNumber(n.phoneNumber);
+                  purchaseMutation.mutate({ phoneNumber: n.phoneNumber });
+                }}
+              >
+                {purchasingNumber === n.phoneNumber ? (
+                  <Loader2 className="h-3 w-3 animate-spin" />
+                ) : (
+                  "Get This Number"
+                )}
+              </Button>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ─── Unit 2: Voice Test Panel ──────────────────────────────────────────────────
+
+type TestStep = { name: string; passed: boolean; detail: string };
+
+function VoiceTestPanel({ twilioConnected, twilioPhone }: { twilioConnected: boolean; twilioPhone?: string | null }) {
+  const [testResult, setTestResult] = useState<{ success: boolean; steps: TestStep[] } | null>(null);
+
+  const testMutation = api.settings.testVoiceWebhook.useMutation({
+    onSuccess: (result) => setTestResult(result),
+    onError: (err) => toast.error(err.message),
+  });
+
+  const canTest = twilioConnected && !!twilioPhone;
+
+  return (
+    <div className="mt-3 space-y-2">
+      <div className="flex items-center gap-2">
+        <Button
+          size="sm"
+          variant="outline"
+          className="h-8 text-xs"
+          disabled={!canTest || testMutation.isPending}
+          onClick={() => {
+            setTestResult(null);
+            testMutation.mutate();
+          }}
+          title={!canTest ? "Requires Twilio connected + AI phone number set" : undefined}
+        >
+          {testMutation.isPending ? (
+            <>
+              <Loader2 className="mr-1 h-3 w-3 animate-spin" />
+              Running test...
+            </>
+          ) : (
+            "Run Voice Test"
+          )}
+        </Button>
+        {!canTest && (
+          <span className="text-xs text-muted-foreground">
+            Requires Twilio connected + AI phone set
+          </span>
+        )}
+      </div>
+
+      {testResult && (
+        <div className="rounded-md border bg-muted/30 p-3 space-y-2">
+          <p className={`text-xs font-semibold ${testResult.success ? "text-green-700" : "text-red-700"}`}>
+            {testResult.success
+              ? "Test passed — your AI phone is working!"
+              : `Test failed — see steps below`}
+          </p>
+          <div className="space-y-1">
+            {testResult.steps.map((step, i) => (
+              <div key={i} className="flex items-start gap-2 text-xs">
+                {step.passed ? (
+                  <CheckCircle2 className="h-3.5 w-3.5 shrink-0 text-green-600 mt-0.5" />
+                ) : (
+                  <XCircle className="h-3.5 w-3.5 shrink-0 text-red-500 mt-0.5" />
+                )}
+                <span>
+                  <span className="font-medium">{step.name}:</span>{" "}
+                  <span className="text-muted-foreground">{step.detail}</span>
+                </span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 function IntegrationsTab() {
-  const { data: org } = api.settings.getOrg.useQuery();
+  const { data: org, refetch: refetchOrg } = api.settings.getOrg.useQuery();
   const { data: status, isLoading } = api.settings.getIntegrationStatus.useQuery();
+  const [showNumberPicker, setShowNumberPicker] = useState(false);
 
   if (isLoading) return <LoadingSkeleton variant="card" />;
 
   const isConnected = (flag: boolean | undefined) => !!flag;
+  const twilioConnected = isConnected(status?.twilio);
+  const hasPhone = !!org?.twilioPhone;
 
   return (
     <div className="space-y-4">
@@ -570,7 +789,36 @@ function IntegrationsTab() {
               <p className="text-xs text-muted-foreground font-medium">Voice Webhook URL</p>
               <WebhookUrl url="https://smb.cafecito-ai.com/api/webhooks/twilio/voice" />
             </div>
+
+            {/* Manual phone field */}
             <TwilioPhoneField currentPhone={org?.twilioPhone} orgName={org?.name ?? ""} />
+
+            {/* Number picker — show when Twilio connected and no phone yet, or user clicks Change */}
+            {twilioConnected && (!hasPhone || showNumberPicker) && (
+              <TwilioNumberPicker
+                onNumberPurchased={(phone) => {
+                  void refetchOrg();
+                  setShowNumberPicker(false);
+                  toast.success(`AI number ${phone} activated!`);
+                }}
+              />
+            )}
+            {twilioConnected && hasPhone && !showNumberPicker && (
+              <Button
+                size="sm"
+                variant="ghost"
+                className="h-7 text-xs text-muted-foreground"
+                onClick={() => setShowNumberPicker(true)}
+              >
+                Change Number
+              </Button>
+            )}
+
+            {/* Voice test */}
+            <VoiceTestPanel
+              twilioConnected={twilioConnected}
+              twilioPhone={org?.twilioPhone}
+            />
           </div>
         </CardContent>
       </Card>

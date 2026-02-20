@@ -107,6 +107,98 @@ export async function POST(req: Request) {
       }
     }
 
+    // ─── Subscription events ──────────────────────────────────────────────
+    if (
+      event.type === "checkout.session.completed" &&
+      (event.data.object as Stripe.Checkout.Session).mode === "subscription"
+    ) {
+      const session = event.data.object as Stripe.Checkout.Session;
+      const customerId =
+        typeof session.customer === "string" ? session.customer : session.customer?.id;
+      if (customerId) {
+        const now = new Date().toISOString();
+        const org = await db.organization.findFirst({ where: { stripeCustomerId: customerId } });
+        if (org) {
+          await db.organization.update({
+            where: { id: org.id },
+            data: { plan: "STARTER", planStatus: "ACTIVE", updatedAt: now },
+          });
+          await db.auditLog.create({
+            data: {
+              id: generateId(),
+              organizationId: org.id,
+              userId: "stripe",
+              action: "subscription.activated",
+              entityType: "Organization",
+              entityId: org.id,
+              changesJson: JSON.stringify({ plan: { from: org.plan, to: "STARTER" }, planStatus: { from: org.planStatus, to: "ACTIVE" } }),
+              createdAt: now,
+            },
+          });
+        }
+      }
+    }
+
+    if (event.type === "customer.subscription.updated") {
+      const subscription = event.data.object as Stripe.Subscription;
+      const customerId =
+        typeof subscription.customer === "string" ? subscription.customer : subscription.customer.id;
+      const statusMap: Record<string, string> = {
+        active: "ACTIVE",
+        past_due: "PAST_DUE",
+        canceled: "CANCELLED",
+        unpaid: "PAST_DUE",
+        trialing: "ACTIVE",
+      };
+      const newStatus = statusMap[subscription.status] ?? "ACTIVE";
+      const now = new Date().toISOString();
+      const org = await db.organization.findFirst({ where: { stripeCustomerId: customerId } });
+      if (org) {
+        await db.organization.update({
+          where: { id: org.id },
+          data: { planStatus: newStatus, updatedAt: now },
+        });
+        await db.auditLog.create({
+          data: {
+            id: generateId(),
+            organizationId: org.id,
+            userId: "stripe",
+            action: "subscription.updated",
+            entityType: "Organization",
+            entityId: org.id,
+            changesJson: JSON.stringify({ planStatus: { from: org.planStatus, to: newStatus } }),
+            createdAt: now,
+          },
+        });
+      }
+    }
+
+    if (event.type === "customer.subscription.deleted") {
+      const subscription = event.data.object as Stripe.Subscription;
+      const customerId =
+        typeof subscription.customer === "string" ? subscription.customer : subscription.customer.id;
+      const now = new Date().toISOString();
+      const org = await db.organization.findFirst({ where: { stripeCustomerId: customerId } });
+      if (org) {
+        await db.organization.update({
+          where: { id: org.id },
+          data: { plan: "TRIAL", planStatus: "CANCELLED", updatedAt: now },
+        });
+        await db.auditLog.create({
+          data: {
+            id: generateId(),
+            organizationId: org.id,
+            userId: "stripe",
+            action: "subscription.cancelled",
+            entityType: "Organization",
+            entityId: org.id,
+            changesJson: JSON.stringify({ plan: { from: org.plan, to: "TRIAL" }, planStatus: { from: org.planStatus, to: "CANCELLED" } }),
+            createdAt: now,
+          },
+        });
+      }
+    }
+
     return NextResponse.json({ received: true });
   } catch (err) {
     console.error("[stripe:webhook] Error processing event:", err instanceof Error ? err.message : "Unknown error");

@@ -11,6 +11,7 @@ interface CloudflareEnv {
   STRIPE_SECRET_KEY?: string;
   STRIPE_WEBHOOK_SECRET?: string;
   NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY?: string;
+  STRIPE_STARTER_PRICE_ID?: string;
   RESEND_API_KEY?: string;
   // Observability (optional — add keys to enable)
   NEXT_PUBLIC_SENTRY_DSN?: string;

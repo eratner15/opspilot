@@ -35,6 +35,37 @@ export async function validateTwilioSignature(
 }
 
 /**
+ * Compute a Twilio-compatible HMAC-SHA1 signature.
+ * Used for self-test: sign a request before POSTing to the webhook.
+ */
+export async function computeTwilioSignature(
+  authToken: string,
+  url: string,
+  params: Record<string, string>
+): Promise<string> {
+  const sortedKeys = Object.keys(params).sort();
+  const stringToSign =
+    url + sortedKeys.map((k) => k + params[k]).join('');
+
+  const encoder = new TextEncoder();
+  const key = await crypto.subtle.importKey(
+    'raw',
+    encoder.encode(authToken),
+    { name: 'HMAC', hash: 'SHA-1' },
+    false,
+    ['sign']
+  );
+
+  const signatureBytes = await crypto.subtle.sign(
+    'HMAC',
+    key,
+    encoder.encode(stringToSign)
+  );
+
+  return btoa(String.fromCharCode(...new Uint8Array(signatureBytes)));
+}
+
+/**
  * Parse application/x-www-form-urlencoded body into a plain object.
  */
 export function parseFormBody(body: string): Record<string, string> {
