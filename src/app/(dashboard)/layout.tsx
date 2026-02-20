@@ -3,6 +3,9 @@ import { Topbar } from "@/components/layout/topbar";
 import { TRPCProvider } from "@/components/providers/trpc-provider";
 import { Toaster } from "sonner";
 
+// Dashboard pages require auth + D1 — always runtime, never prerendered
+export const dynamic = "force-dynamic";
+
 export default function DashboardLayout({
   children,
 }: {

@@ -1,7 +1,7 @@
 # OpsPilot — TASKS.md
 ## Autonomous Build Task Registry
 ## Last Updated: 2026-02-19
-## Total Progress: 13 / 48 units complete
+## Total Progress: 15 / 48 units complete
 ## Current Phase: 1 — CORE CRUD
 ## Build Status: IN PROGRESS
 
@@ -224,14 +224,14 @@ If all tasks in a phase are done → run Phase Gate → proceed to next phase.
   - NOTES:
 
 ### Unit 1.5 — Job Create + Detail
-- [ ] Job creation form and full detail page with status workflow
+- [x] Job creation form and full detail page with status workflow — form with customer/tech selectors, line items builder, schedule; detail page with status dropdown transitions, activity log, line item table, linked invoices
   - ACTION: `jobs/new/page.tsx` (customer selector, category, priority, description, tech assignment, schedule date+window, line items as JSON string), `jobs/[id]/page.tsx` (status badge, transition buttons, customer card, tech card, line items, activity log, actions)
   - STATUS RULES: NEW→SCHEDULED→EN_ROUTE→IN_PROGRESS→COMPLETED→INVOICED→PAID, Any→CANCELLED/ON_HOLD
   - VERIFY: Create validates, transitions enforce rules, line items calc
   - NOTES:
 
 ### Unit 1.6 — Job Calendar View
-- [ ] Week-based calendar with tech rows
+- [x] Week-based calendar with tech rows — CSS grid 7-day calendar, priority-colored job cards, prev/next/today nav, legend
   - ACTION: `jobs/calendar/page.tsx`, CSS grid (7 cols=days, rows=techs), job blocks color-coded by priority, click→detail, day/week toggle, prev/next/today
   - VERIFY: Calendar renders current week, jobs in correct slots, navigation works
   - NOTES:
