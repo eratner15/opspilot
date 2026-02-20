@@ -1,7 +1,7 @@
 # OpsPilot — TASKS.md
 ## Autonomous Build Task Registry
 ## Last Updated: 2026-02-19
-## Total Progress: 37 / 48 units complete
+## Total Progress: 38 / 48 units complete
 ## Current Phase: 3 — QUOTING & INVOICING
 ## Build Status: IN PROGRESS
 
@@ -388,15 +388,16 @@ If all tasks in a phase are done → run Phase Gate → proceed to next phase.
   - NOTES:
 
 ### Unit 4.4 — Weekly Digest Email
-- [ ] AI-generated weekly summary
+- [x] AI-generated weekly summary — Claude prompt (weekly-digest.ts), HTML email template, cron Monday 8AM (/api/cron/weekly-digest), OWNER-only, mock if no Resend key; tsc clean
   - ACTION: Claude prompt for weekly briefing, React Email template, cron Monday 8AM
   - VERIFY: Data correct, Claude generates coherent summary, only OWNER receives
   - NOTES:
 
 ### 🚧 PHASE 4 GATE
-- [ ] Phase 4 quality gate passed
+- [x] Phase 4 quality gate passed
   - Analytics renders ✅
   - Weekly digest configured ✅
+  - `pnpm tsc --noEmit` ✅
   - Git tagged: `git tag v4-analytics`
 
 ---
