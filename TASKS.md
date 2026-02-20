@@ -1,7 +1,7 @@
 # OpsPilot — TASKS.md
 ## Autonomous Build Task Registry
 ## Last Updated: 2026-02-19
-## Total Progress: 20 / 48 units complete
+## Total Progress: 21 / 48 units complete
 ## Current Phase: 2 — VOICE & AI
 ## Build Status: IN PROGRESS
 
@@ -268,7 +268,7 @@ If all tasks in a phase are done → run Phase Gate → proceed to next phase.
   - NOTES:
 
 ### Unit 2.2 — Twilio Voice Webhook
-- [ ] Incoming call handler with TwiML response flow
+- [x] Incoming call handler with TwiML response flow — voice/route.ts (sig verify, org lookup, Call record), gather/route.ts (transcript → Claude classify → auto-create Job)
   - ACTION: `src/app/api/webhooks/twilio/voice/route.ts` (verify sig, lookup org by To#, lookup customer by From#, create Call, return TwiML), voice-gather handler (speech → Claude classify → create job)
   - VERIFY: Endpoint returns valid TwiML XML, Call record created
   - NOTES:
