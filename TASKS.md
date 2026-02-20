@@ -1,7 +1,7 @@
 # OpsPilot — TASKS.md
 ## Autonomous Build Task Registry
 ## Last Updated: 2026-02-19
-## Total Progress: 28 / 48 units complete
+## Total Progress: 29 / 48 units complete
 ## Current Phase: 3 — QUOTING & INVOICING
 ## Build Status: IN PROGRESS
 
@@ -321,7 +321,7 @@ If all tasks in a phase are done → run Phase Gate → proceed to next phase.
   - NOTES:
 
 ### Unit 3.3 — Send Quote + Public Quote Page
-- [ ] Email delivery and customer-facing signature flow
+- [x] Email delivery and customer-facing signature flow — sendQuote tRPC mutation, Resend email (mock if no key), /quote/[token] public page with signature canvas, accept/decline API
   - ACTION: React Email template, send via Resend (or mock), `/quote/[token]` public page (NO AUTH, signature canvas, accept/decline)
   - VERIFY: Public page loads without auth, signature works on mobile, accept→job
   - NOTES:
