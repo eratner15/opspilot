@@ -16,5 +16,8 @@
   }],
   "triggers": {
     "crons": ["0 8 * * 1", "0 0 * * *"]
+  },
+  "vars": {
+    "NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY": "pk_test_YWNjdXJhdGUtcmFtLTMyLmNsZXJrLmFjY291bnRzLmRldiQ"
   }
 }
