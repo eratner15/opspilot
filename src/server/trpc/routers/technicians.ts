@@ -3,27 +3,7 @@ import { z } from "zod";
 import { createTechnicianSchema, updateTechnicianSchema } from "@/lib/validations/technician";
 import { generateId } from "@/lib/utils";
 import { TRPCError } from "@trpc/server";
-import type { Db } from "@/lib/db";
-
-async function auditLog(
-  ctx: { db: Db; userId: string; organizationId: string },
-  action: string,
-  entityType: string,
-  entityId: string
-) {
-  await ctx.db.auditLog.create({
-    data: {
-      id: generateId(),
-      organizationId: ctx.organizationId,
-      userId: ctx.userId,
-      action,
-      entityType,
-      entityId,
-      changesJson: null,
-      createdAt: new Date().toISOString(),
-    },
-  });
-}
+import { createAuditLog } from "@/server/services/audit";
 
 export const techniciansRouter = router({
   list: protectedProcedure
@@ -98,7 +78,7 @@ export const techniciansRouter = router({
           updatedAt: now,
         },
       });
-      await auditLog(ctx, "technician.create", "Technician", id);
+      await createAuditLog(ctx, "technician.create", "Technician", id);
       return tech;
     }),
 
@@ -120,7 +100,7 @@ export const techniciansRouter = router({
           updatedAt: new Date().toISOString(),
         },
       });
-      await auditLog(ctx, "technician.update", "Technician", input.id);
+      await createAuditLog(ctx, "technician.update", "Technician", input.id);
       return tech;
     }),
 });

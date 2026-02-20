@@ -3,7 +3,7 @@ import { z } from "zod";
 import { createJobSchema, updateJobSchema, updateJobStatusSchema } from "@/lib/validations/job";
 import { generateId } from "@/lib/utils";
 import { TRPCError } from "@trpc/server";
-import type { Db } from "@/lib/db";
+import { createAuditLog } from "@/server/services/audit";
 
 // Valid status transitions
 const STATUS_TRANSITIONS: Record<string, string[]> = {
@@ -17,27 +17,6 @@ const STATUS_TRANSITIONS: Record<string, string[]> = {
   CANCELLED: ["NEW"],
   ON_HOLD: ["NEW", "SCHEDULED", "CANCELLED"],
 };
-
-async function auditLog(
-  ctx: { db: Db; userId: string; organizationId: string },
-  action: string,
-  entityType: string,
-  entityId: string,
-  changes?: Record<string, { from: unknown; to: unknown }>
-) {
-  await ctx.db.auditLog.create({
-    data: {
-      id: generateId(),
-      organizationId: ctx.organizationId,
-      userId: ctx.userId,
-      action,
-      entityType,
-      entityId,
-      changesJson: changes ? JSON.stringify(changes) : null,
-      createdAt: new Date().toISOString(),
-    },
-  });
-}
 
 function generateJobNumber(): string {
   const date = new Date();
@@ -153,7 +132,7 @@ export const jobsRouter = router({
         },
       });
 
-      await auditLog(ctx, "job.create", "Job", id, {
+      await createAuditLog(ctx, "job.create", "Job", id, {
         status: { from: null, to: input.status },
       });
 
@@ -178,7 +157,7 @@ export const jobsRouter = router({
         },
       });
 
-      await auditLog(ctx, "job.update", "Job", input.id);
+      await createAuditLog(ctx, "job.update", "Job", input.id);
       return job;
     }),
 
@@ -211,7 +190,7 @@ export const jobsRouter = router({
         },
       });
 
-      await auditLog(ctx, "job.statusChange", "Job", input.id, {
+      await createAuditLog(ctx, "job.statusChange", "Job", input.id, {
         status: { from: existing.status, to: input.status },
       });
 
@@ -226,7 +205,7 @@ export const jobsRouter = router({
       });
       if (!existing) throw new TRPCError({ code: "NOT_FOUND", message: "Job not found" });
       await ctx.db.job.delete({ where: { id: input.id } });
-      await auditLog(ctx, "job.delete", "Job", input.id);
+      await createAuditLog(ctx, "job.delete", "Job", input.id);
       return { success: true };
     }),
 });

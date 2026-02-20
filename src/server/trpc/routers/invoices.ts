@@ -7,30 +7,9 @@ import {
 } from "@/lib/validations/invoice";
 import { generateId, formatCurrency, formatDate } from "@/lib/utils";
 import { TRPCError } from "@trpc/server";
-import type { Db } from "@/lib/db";
+import { createAuditLog } from "@/server/services/audit";
 import { getCloudflareContext } from "@opennextjs/cloudflare";
 import { sendEmail, buildInvoiceEmailHtml } from "@/server/services/email";
-
-async function auditLog(
-  ctx: { db: Db; userId: string; organizationId: string },
-  action: string,
-  entityType: string,
-  entityId: string,
-  changes?: Record<string, { from: unknown; to: unknown }>
-) {
-  await ctx.db.auditLog.create({
-    data: {
-      id: generateId(),
-      organizationId: ctx.organizationId,
-      userId: ctx.userId,
-      action,
-      entityType,
-      entityId,
-      changesJson: changes ? JSON.stringify(changes) : null,
-      createdAt: new Date().toISOString(),
-    },
-  });
-}
 
 function generateInvoiceNumber(): string {
   const date = new Date();
@@ -145,7 +124,7 @@ export const invoicesRouter = router({
         },
       });
 
-      await auditLog(ctx, "invoice.create", "Invoice", id, {
+      await createAuditLog(ctx, "invoice.create", "Invoice", id, {
         status: { from: null, to: "DRAFT" },
         totalCents: { from: null, to: totalCents },
       });
@@ -209,7 +188,7 @@ export const invoicesRouter = router({
         },
       });
 
-      await auditLog(ctx, "invoice.createFromJob", "Invoice", id, {
+      await createAuditLog(ctx, "invoice.createFromJob", "Invoice", id, {
         status: { from: null, to: "DRAFT" },
         jobId: { from: null, to: job.id },
       });
@@ -249,7 +228,7 @@ export const invoicesRouter = router({
         },
       });
 
-      await auditLog(ctx, "invoice.update", "Invoice", id, {
+      await createAuditLog(ctx, "invoice.update", "Invoice", id, {
         totalCents: { from: existing.totalCents, to: totalCents },
       });
 
@@ -274,7 +253,7 @@ export const invoicesRouter = router({
         },
       });
 
-      await auditLog(ctx, "invoice.updateStatus", "Invoice", input.id, {
+      await createAuditLog(ctx, "invoice.updateStatus", "Invoice", input.id, {
         status: { from: existing.status, to: input.status },
       });
 
@@ -335,7 +314,7 @@ export const invoicesRouter = router({
         },
       });
 
-      await auditLog(ctx, "invoice.send", "Invoice", input.id, {
+      await createAuditLog(ctx, "invoice.send", "Invoice", input.id, {
         status: { from: invoice.status, to: "SENT" },
       });
 
@@ -355,7 +334,7 @@ export const invoicesRouter = router({
 
       await ctx.db.invoice.delete({ where: { id: input.id } });
 
-      await auditLog(ctx, "invoice.delete", "Invoice", input.id, {
+      await createAuditLog(ctx, "invoice.delete", "Invoice", input.id, {
         status: { from: existing.status, to: null },
       });
 

@@ -1,29 +1,7 @@
 import { router, protectedProcedure } from '../trpc';
 import { z } from 'zod';
 import { TRPCError } from '@trpc/server';
-import { generateId } from '@/lib/utils';
-import type { Db } from '@/lib/db';
-
-async function auditLog(
-  ctx: { db: Db; userId: string; organizationId: string },
-  action: string,
-  entityType: string,
-  entityId: string,
-  changes?: Record<string, { from: unknown; to: unknown }>
-) {
-  await ctx.db.auditLog.create({
-    data: {
-      id: generateId(),
-      organizationId: ctx.organizationId,
-      userId: ctx.userId,
-      action,
-      entityType,
-      entityId,
-      changesJson: changes ? JSON.stringify(changes) : null,
-      createdAt: new Date().toISOString(),
-    },
-  });
-}
+import { createAuditLog } from '@/server/services/audit';
 
 export const callsRouter = router({
   list: protectedProcedure
@@ -103,7 +81,7 @@ export const callsRouter = router({
         data: { status: input.status, updatedAt: new Date().toISOString() },
       });
 
-      await auditLog(ctx, 'call.updateStatus', 'Call', input.id, {
+      await createAuditLog(ctx, 'call.updateStatus', 'Call', input.id, {
         status: { from: call.status, to: input.status },
       });
 

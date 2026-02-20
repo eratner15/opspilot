@@ -3,28 +3,7 @@ import { z } from "zod";
 import { createCustomerSchema, updateCustomerSchema } from "@/lib/validations/customer";
 import { generateId } from "@/lib/utils";
 import { TRPCError } from "@trpc/server";
-import type { Db } from "@/lib/db";
-
-async function auditLog(
-  ctx: { db: Db; userId: string; organizationId: string },
-  action: string,
-  entityType: string,
-  entityId: string,
-  changes?: Record<string, { from: unknown; to: unknown }>
-) {
-  await ctx.db.auditLog.create({
-    data: {
-      id: generateId(),
-      organizationId: ctx.organizationId,
-      userId: ctx.userId,
-      action,
-      entityType,
-      entityId,
-      changesJson: changes ? JSON.stringify(changes) : null,
-      createdAt: new Date().toISOString(),
-    },
-  });
-}
+import { createAuditLog } from "@/server/services/audit";
 
 export const customersRouter = router({
   list: protectedProcedure
@@ -113,7 +92,7 @@ export const customersRouter = router({
           updatedAt: now,
         },
       });
-      await auditLog(ctx, "customer.create", "Customer", id, {
+      await createAuditLog(ctx, "customer.create", "Customer", id, {
         name: { from: null, to: `${input.firstName} ${input.lastName}` },
       });
       return customer;
@@ -137,7 +116,7 @@ export const customersRouter = router({
           updatedAt: new Date().toISOString(),
         },
       });
-      await auditLog(ctx, "customer.update", "Customer", input.id);
+      await createAuditLog(ctx, "customer.update", "Customer", input.id);
       return customer;
     }),
 
@@ -149,7 +128,7 @@ export const customersRouter = router({
       });
       if (!existing) throw new TRPCError({ code: "NOT_FOUND", message: "Customer not found" });
       await ctx.db.customer.delete({ where: { id: input.id } });
-      await auditLog(ctx, "customer.delete", "Customer", input.id);
+      await createAuditLog(ctx, "customer.delete", "Customer", input.id);
       return { success: true };
     }),
 

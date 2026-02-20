@@ -3,7 +3,7 @@ import { z } from "zod";
 import { createQuoteSchema, updateQuoteSchema, updateQuoteStatusSchema } from "@/lib/validations/quote";
 import { generateId } from "@/lib/utils";
 import { TRPCError } from "@trpc/server";
-import type { Db } from "@/lib/db";
+import { createAuditLog } from "@/server/services/audit";
 import type { LineItem } from "@/lib/validations/quote";
 import { callClaudeJSON } from "@/server/services/ai/claude";
 import {
@@ -14,27 +14,6 @@ import {
 import { getCloudflareContext } from "@opennextjs/cloudflare";
 import { sendEmail, buildQuoteEmailHtml } from "@/server/services/email";
 import { formatCurrency, formatDate } from "@/lib/utils";
-
-async function auditLog(
-  ctx: { db: Db; userId: string; organizationId: string },
-  action: string,
-  entityType: string,
-  entityId: string,
-  changes?: Record<string, { from: unknown; to: unknown }>
-) {
-  await ctx.db.auditLog.create({
-    data: {
-      id: generateId(),
-      organizationId: ctx.organizationId,
-      userId: ctx.userId,
-      action,
-      entityType,
-      entityId,
-      changesJson: changes ? JSON.stringify(changes) : null,
-      createdAt: new Date().toISOString(),
-    },
-  });
-}
 
 function generateQuoteNumber(): string {
   const date = new Date();
@@ -145,7 +124,7 @@ export const quotesRouter = router({
         },
       });
 
-      await auditLog(ctx, "quote.create", "Quote", id, {
+      await createAuditLog(ctx, "quote.create", "Quote", id, {
         status: { from: null, to: "DRAFT" },
         totalCents: { from: null, to: totalCents },
       });
@@ -186,7 +165,7 @@ export const quotesRouter = router({
         },
       });
 
-      await auditLog(ctx, "quote.update", "Quote", id, {
+      await createAuditLog(ctx, "quote.update", "Quote", id, {
         totalCents: { from: existing.totalCents, to: totalCents },
       });
 
@@ -211,7 +190,7 @@ export const quotesRouter = router({
         },
       });
 
-      await auditLog(ctx, "quote.updateStatus", "Quote", input.id, {
+      await createAuditLog(ctx, "quote.updateStatus", "Quote", input.id, {
         status: { from: existing.status, to: input.status },
       });
 
@@ -231,7 +210,7 @@ export const quotesRouter = router({
 
       await ctx.db.quote.delete({ where: { id: input.id } });
 
-      await auditLog(ctx, "quote.delete", "Quote", input.id, {
+      await createAuditLog(ctx, "quote.delete", "Quote", input.id, {
         status: { from: existing.status, to: null },
       });
 
@@ -294,7 +273,7 @@ export const quotesRouter = router({
         },
       });
 
-      await auditLog(ctx, "quote.send", "Quote", input.id, {
+      await createAuditLog(ctx, "quote.send", "Quote", input.id, {
         status: { from: quote.status, to: "SENT" },
       });
 
