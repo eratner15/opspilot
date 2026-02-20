@@ -6,6 +6,7 @@ import { analyticsRouter } from "./routers/analytics";
 import { callsRouter } from "./routers/calls";
 import { quotesRouter } from "./routers/quotes";
 import { invoicesRouter } from "./routers/invoices";
+import { settingsRouter } from "./routers/settings";
 
 export const appRouter = router({
   customers: customersRouter,
@@ -15,6 +16,7 @@ export const appRouter = router({
   calls: callsRouter,
   quotes: quotesRouter,
   invoices: invoicesRouter,
+  settings: settingsRouter,
 });
 
 
