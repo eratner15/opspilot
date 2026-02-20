@@ -1,5 +1,7 @@
 "use client";
 
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import { api } from "@/lib/trpc/client";
 import { PageHeader } from "@/components/shared/page-header";
 import { LoadingSkeleton } from "@/components/shared/loading-skeleton";
@@ -20,6 +22,7 @@ import {
   Phone,
   Clock,
   AlertCircle,
+  Zap,
 } from "lucide-react";
 import { formatCurrency, formatDateTime } from "@/lib/utils";
 import Link from "next/link";
@@ -94,6 +97,54 @@ function RevenueChart({ data }: { data: { date: string; revenueCents: number }[]
   );
 }
 
+function OnboardingBanner() {
+  const router = useRouter();
+  const [showBanner, setShowBanner] = useState(false);
+
+  useEffect(() => {
+    const onboarded = localStorage.getItem("opspilot_onboarded");
+    if (!onboarded) setShowBanner(true);
+  }, []);
+
+  if (!showBanner) return null;
+
+  return (
+    <div className="rounded-lg border border-blue-200 bg-blue-50 p-4">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex items-start gap-3">
+          <Zap className="h-5 w-5 shrink-0 text-blue-600 mt-0.5" />
+          <div>
+            <p className="font-medium text-blue-900">Complete your setup</p>
+            <p className="text-sm text-blue-700">
+              Run the quick setup wizard to configure your business and add your first technician.
+            </p>
+          </div>
+        </div>
+        <div className="flex items-center gap-2 ml-8 sm:ml-0">
+          <Button
+            size="sm"
+            onClick={() => router.push("/onboarding")}
+            className="bg-blue-600 hover:bg-blue-700 text-white"
+          >
+            Start Setup
+          </Button>
+          <Button
+            size="sm"
+            variant="ghost"
+            className="text-blue-600"
+            onClick={() => {
+              localStorage.setItem("opspilot_onboarded", "true");
+              setShowBanner(false);
+            }}
+          >
+            Dismiss
+          </Button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function DashboardPage() {
   const { data: kpis, isLoading: kpisLoading } = api.analytics.getDashboardKPIs.useQuery();
   const { data: revenueChart, isLoading: chartLoading } =
@@ -112,6 +163,8 @@ export default function DashboardPage() {
           <Link href="/jobs/new">New Job</Link>
         </Button>
       </PageHeader>
+
+      <OnboardingBanner />
 
       {/* KPI Cards */}
       {kpisLoading ? (
