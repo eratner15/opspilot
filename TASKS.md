@@ -1,8 +1,8 @@
 # OpsPilot — TASKS.md
 ## Autonomous Build Task Registry
 ## Last Updated: 2026-02-19
-## Total Progress: 24 / 48 units complete
-## Current Phase: 2 — VOICE & AI
+## Total Progress: 26 / 48 units complete
+## Current Phase: 3 — QUOTING & INVOICING
 ## Build Status: IN PROGRESS
 
 ---
@@ -292,13 +292,13 @@ If all tasks in a phase are done → run Phase Gate → proceed to next phase.
   - NOTES:
 
 ### Unit 2.6 — Voice Integration Test + Fallbacks
-- [ ] E2E test script and fallback error handling
+- [x] E2E test script and fallback error handling — scripts/test-voice-flow.ts: 26 tests pass (classifier, TwiML, form parsing, greetings, fallbacks, PII checks); professional fallbacks in all error paths
   - ACTION: `scripts/test-voice-flow.ts`, fallbacks: Claude fail→"Leave message", no tech→"Call within 1 hour"
   - VERIFY: Full pipeline works mocked, fallbacks professional, no PII in logs
   - NOTES:
 
 ### 🚧 PHASE 2 GATE
-- [ ] Phase 2 quality gate passed
+- [x] Phase 2 quality gate passed — tsc clean, voice/AI pipeline verified, v2-voice tagged
   - Voice/AI endpoints valid ✅
   - Call→Job pipeline correct ✅
   - Call log pages render ✅

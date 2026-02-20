@@ -4,6 +4,7 @@ import { techniciansRouter } from "./routers/technicians";
 import { jobsRouter } from "./routers/jobs";
 import { analyticsRouter } from "./routers/analytics";
 import { callsRouter } from "./routers/calls";
+import { quotesRouter } from "./routers/quotes";
 
 export const appRouter = router({
   customers: customersRouter,
@@ -11,6 +12,7 @@ export const appRouter = router({
   jobs: jobsRouter,
   analytics: analyticsRouter,
   calls: callsRouter,
+  quotes: quotesRouter,
 });
 
 
