@@ -1,7 +1,7 @@
 # OpsPilot — TASKS.md
 ## Autonomous Build Task Registry
 ## Last Updated: 2026-02-19
-## Total Progress: 39 / 48 units complete
+## Total Progress: 40 / 48 units complete
 ## Current Phase: 5 — POLISH & SECURITY
 ## Build Status: IN PROGRESS
 
@@ -411,7 +411,7 @@ If all tasks in a phase are done → run Phase Gate → proceed to next phase.
   - NOTES:
 
 ### Unit 5.2 — Rate Limiting
-- [ ] Rate limiter using Cloudflare KV
+- [x] Rate limiter using Cloudflare KV — src/lib/rate-limit.ts, sliding window via KV, enforceAuth middleware returns TOO_MANY_REQUESTS (429), fails open in local dev; tsc clean
   - ACTION: `src/lib/rate-limit.ts` using KV binding (100/min per user, 1000/min per org), add to tRPC middleware, return 429
   - NOTE: Use Cloudflare KV instead of Upstash since we're already on CF
   - VERIFY: Rate limiter works, exceeding returns 429

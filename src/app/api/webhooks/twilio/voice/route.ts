@@ -34,7 +34,7 @@ export async function POST(req: Request): Promise<Response> {
     const url = new URL(req.url).toString();
     const valid = await validateTwilioSignature(authToken, url, params, signature);
     if (!valid) {
-      return new Response('Forbidden', { status: 403 });
+      return new Response('Unauthorized', { status: 401 });
     }
   }
 

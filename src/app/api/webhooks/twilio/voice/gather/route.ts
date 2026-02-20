@@ -36,7 +36,7 @@ export async function POST(req: Request): Promise<Response> {
     const signature = req.headers.get('X-Twilio-Signature') ?? '';
     const valid = await validateTwilioSignature(authToken, url.toString(), params, signature);
     if (!valid) {
-      return new Response('Forbidden', { status: 403 });
+      return new Response('Unauthorized', { status: 401 });
     }
   }
 
