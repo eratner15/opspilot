@@ -20,9 +20,8 @@ export async function POST(req: Request) {
   try {
     const { env } = await getCloudflareContext();
     db = createDb(env.DB);
-    const cfEnv = env as unknown as Record<string, string | undefined>;
-    stripeSecretKey = cfEnv.STRIPE_SECRET_KEY;
-    webhookSecret = cfEnv.STRIPE_WEBHOOK_SECRET;
+    stripeSecretKey = env.STRIPE_SECRET_KEY;
+    webhookSecret = env.STRIPE_WEBHOOK_SECRET;
   } catch {
     const { PrismaClient } = await import("@prisma/client");
     db = new PrismaClient();

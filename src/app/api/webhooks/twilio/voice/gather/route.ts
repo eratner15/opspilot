@@ -1,3 +1,4 @@
+import { z } from 'zod';
 import { getCloudflareContext } from '@opennextjs/cloudflare';
 import { createDb } from '@/lib/db';
 import { parseFormBody, validateTwilioSignature, buildTwiML } from '@/server/services/twilio/validate';
@@ -8,18 +9,27 @@ import { dispatchJob } from '@/server/services/dispatch';
 
 export const runtime = 'edge';
 
+const uuidSchema = z.string().uuid();
+
 export async function POST(req: Request): Promise<Response> {
   const url = new URL(req.url);
-  const callId = url.searchParams.get('callId') ?? '';
-  const orgId = url.searchParams.get('orgId') ?? '';
+
+  // Validate query params are UUIDs before using them in DB queries
+  const callIdRaw = url.searchParams.get('callId');
+  const orgIdRaw = url.searchParams.get('orgId');
+  const callIdResult = uuidSchema.safeParse(callIdRaw);
+  const orgIdResult = uuidSchema.safeParse(orgIdRaw);
+
+  if (!callIdResult.success || !orgIdResult.success) {
+    return new Response('Bad Request', { status: 400 });
+  }
+
+  const callId = callIdResult.data;
+  const orgId = orgIdResult.data;
 
   const body = await req.text();
   const params = parseFormBody(body);
   const transcript = params['SpeechResult'] ?? '';
-
-  if (!callId || !orgId) {
-    return buildTwiML(`<Say>Thank you. We will call you back shortly. Goodbye.</Say><Hangup/>`);
-  }
 
   let env: CloudflareEnv;
   try {
@@ -121,8 +131,8 @@ export async function POST(req: Request): Promise<Response> {
         accountSid: env.TWILIO_ACCOUNT_SID,
         authToken: env.TWILIO_AUTH_TOKEN,
         fromPhone: env.TWILIO_PHONE_NUMBER,
-      }).catch(() => {
-        // Non-critical — caller already has confirmation
+      }).catch((err: unknown) => {
+        console.error('[voice:gather] dispatchJob failed', err);
       });
     }
   }

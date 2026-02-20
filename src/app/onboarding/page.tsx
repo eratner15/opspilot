@@ -102,7 +102,7 @@ function BusinessStep({ onNext }: { onNext: () => void }) {
             updateMutation.mutate({
               name: data.name,
               phone: data.phone,
-              timezone: "America/New_York",
+              timezone: Intl.DateTimeFormat().resolvedOptions().timeZone || "America/New_York",
             })
           )}
           className="space-y-4"

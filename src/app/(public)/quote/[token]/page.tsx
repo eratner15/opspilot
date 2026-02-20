@@ -31,9 +31,43 @@ export default async function PublicQuotePage({ params }: Props) {
 
   if (!quote) notFound();
 
-  // Parse line items
+  // Show a clear page for expired quotes rather than a broken form
+  if (quote.validUntil && new Date(quote.validUntil) < new Date() && quote.status === "SENT") {
+    return (
+      <div className="min-h-screen bg-zinc-50 flex items-center justify-center px-4">
+        <div className="text-center space-y-4 max-w-sm">
+          <div className="text-5xl">⏰</div>
+          <h1 className="text-2xl font-bold text-zinc-900">This quote has expired</h1>
+          <p className="text-zinc-500">
+            This quote from {quote.organization.name} is no longer valid. Please contact them for an updated quote.
+          </p>
+          {quote.organization.phone && (
+            <p className="text-sm text-zinc-400">
+              Call us at <span className="font-medium text-zinc-700">{quote.organization.phone}</span>
+            </p>
+          )}
+        </div>
+      </div>
+    );
+  }
+
+  // Parse line items — guard against corrupt JSON
   type LineItem = { description: string; quantity: number; unitPriceCents: number };
-  const lineItems: LineItem[] = JSON.parse(quote.lineItemsJson) as LineItem[];
+  let lineItems: LineItem[];
+  try {
+    lineItems = JSON.parse(quote.lineItemsJson) as LineItem[];
+  } catch {
+    return (
+      <div className="min-h-screen bg-zinc-50 flex items-center justify-center px-4">
+        <div className="text-center space-y-4 max-w-sm">
+          <h1 className="text-2xl font-bold text-zinc-900">Unable to load quote</h1>
+          <p className="text-zinc-500">
+            There was a problem loading this quote. Please contact {quote.organization.name} directly.
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-zinc-50 px-4 py-12">

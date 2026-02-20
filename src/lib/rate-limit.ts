@@ -37,7 +37,10 @@ export async function checkRateLimit(
   const resetAt = (Math.floor(now / WINDOW_SECONDS) + 1) * WINDOW_SECONDS * 1000;
 
   try {
-    // Atomic increment using KV
+    // NOTE: KV does not support atomic read-modify-write. Concurrent requests that
+    // all read before any write can each see current=0 and all pass the limit check.
+    // For MVP traffic levels this burst risk is acceptable. To eliminate it, use a
+    // Durable Object or an external store with atomic increment support.
     const raw = await kv.get(windowKey);
     const current = raw ? parseInt(raw, 10) : 0;
 

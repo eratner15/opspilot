@@ -46,15 +46,17 @@ export default function JobCalendarPage() {
 
   const jobs = data?.items ?? [];
 
+  // Normalize a Date to a YYYY-MM-DD string in local time for safe same-day comparison
+  const toLocalDateStr = (d: Date) =>
+    `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+
   const getJobsForDate = (date: Date) => {
+    const dateStr = toLocalDateStr(date);
     return jobs.filter((job) => {
       if (!job.scheduledAt) return false;
+      // Parse ISO string as local date by replacing 'Z'/'offset' to avoid UTC shift
       const jobDate = new Date(job.scheduledAt);
-      return (
-        jobDate.getFullYear() === date.getFullYear() &&
-        jobDate.getMonth() === date.getMonth() &&
-        jobDate.getDate() === date.getDate()
-      );
+      return toLocalDateStr(jobDate) === dateStr;
     });
   };
 

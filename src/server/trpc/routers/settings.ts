@@ -62,13 +62,20 @@ export const settingsRouter = router({
       if (!currentUser || currentUser.role !== "OWNER") {
         throw new TRPCError({ code: "FORBIDDEN", message: "Only owners can change roles" });
       }
+      // Verify target user belongs to this organization before updating
+      const targetUser = await ctx.db.user.findFirst({
+        where: { id: input.userId, organizationId: ctx.organizationId },
+      });
+      if (!targetUser) {
+        throw new TRPCError({ code: "NOT_FOUND", message: "User not found" });
+      }
       const now = new Date().toISOString();
       const updated = await ctx.db.user.update({
         where: { id: input.userId },
         data: { role: input.role, updatedAt: now },
       });
       await createAuditLog(ctx, "user.role_change", "User", input.userId, {
-        role: { from: null, to: input.role },
+        role: { from: targetUser.role, to: input.role },
       });
       return updated;
     }),
