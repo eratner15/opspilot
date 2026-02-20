@@ -13,7 +13,8 @@ export function Topbar() {
           <OrganizationSwitcher
             appearance={{
               elements: {
-                rootBox: "text-sm",
+                rootBox: "text-sm max-w-[160px] sm:max-w-none",
+                organizationSwitcherTrigger: "truncate",
               },
             }}
           />

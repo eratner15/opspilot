@@ -120,7 +120,8 @@ export default function JobCalendarPage() {
       {isLoading ? (
         <LoadingSkeleton variant="table" />
       ) : (
-        <div className="grid grid-cols-7 gap-2 min-h-[500px]">
+        <div className="overflow-x-auto -mx-4 px-4 sm:mx-0 sm:px-0">
+          <div className="grid grid-cols-7 gap-2 min-h-[500px] min-w-[560px]">
           {weekDates.map((date, i) => {
             const dayJobs = getJobsForDate(date);
             const isToday =
@@ -170,6 +171,7 @@ export default function JobCalendarPage() {
               </div>
             );
           })}
+        </div>
         </div>
       )}
 

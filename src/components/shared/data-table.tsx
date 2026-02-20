@@ -85,7 +85,7 @@ export function DataTable<TData, TValue>({
         </div>
       )}
 
-      <div className="rounded-md border">
+      <div className="rounded-md border overflow-x-auto">
         <Table>
           <TableHeader>
             {table.getHeaderGroups().map((headerGroup) => (
@@ -128,7 +128,7 @@ export function DataTable<TData, TValue>({
       </div>
 
       {/* Pagination */}
-      <div className="flex items-center justify-between px-2">
+      <div className="flex flex-wrap items-center justify-between gap-2 px-2">
         <div className="text-sm text-muted-foreground">
           {table.getFilteredSelectedRowModel().rows.length > 0 && (
             <span>{table.getFilteredSelectedRowModel().rows.length} of{" "}</span>

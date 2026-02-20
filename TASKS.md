@@ -1,7 +1,7 @@
 # OpsPilot — TASKS.md
 ## Autonomous Build Task Registry
 ## Last Updated: 2026-02-19
-## Total Progress: 41 / 48 units complete
+## Total Progress: 42 / 48 units complete
 ## Current Phase: 5 — POLISH & SECURITY
 ## Build Status: IN PROGRESS
 
@@ -424,7 +424,7 @@ If all tasks in a phase are done → run Phase Gate → proceed to next phase.
   - NOTES:
 
 ### Unit 5.4 — Error Boundaries + Loading States Audit
-- [ ] Error boundaries and full UX audit
+- [x] Error boundaries and full UX audit — not-found.tsx, loading.tsx for all 8 dashboard sub-routes, existing error.tsx verified as client component with reset; tsc clean
   - ACTION: error.tsx for each route group, loading.tsx, audit every page
   - VERIFY: Errors caught, every list has empty state, every async has loading
   - NOTES:
