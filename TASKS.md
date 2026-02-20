@@ -1,7 +1,7 @@
 # OpsPilot — TASKS.md
 ## Autonomous Build Task Registry
 ## Last Updated: 2026-02-19
-## Total Progress: 22 / 48 units complete
+## Total Progress: 23 / 48 units complete
 ## Current Phase: 2 — VOICE & AI
 ## Build Status: IN PROGRESS
 
@@ -280,7 +280,7 @@ If all tasks in a phase are done → run Phase Gate → proceed to next phase.
   - NOTES:
 
 ### Unit 2.4 — SMS Reply Handling
-- [ ] Process tech SMS replies (YES/NO)
+- [x] Process tech SMS replies (YES/NO) — sms/route.ts: sig verify, tech lookup by phone, YES→confirm, NO→unassign+reassign to next available tech
   - ACTION: `src/app/api/webhooks/twilio/sms/route.ts` (verify sig, parse, YES→update job, NO→flag for reassignment)
   - VERIFY: YES updates status, NO flags job, unknown handled gracefully
   - NOTES:
