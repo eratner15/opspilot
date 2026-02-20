@@ -1,7 +1,7 @@
 # OpsPilot — TASKS.md
 ## Autonomous Build Task Registry
 ## Last Updated: 2026-02-19
-## Total Progress: 21 / 48 units complete
+## Total Progress: 22 / 48 units complete
 ## Current Phase: 2 — VOICE & AI
 ## Build Status: IN PROGRESS
 
@@ -274,7 +274,7 @@ If all tasks in a phase are done → run Phase Gate → proceed to next phase.
   - NOTES:
 
 ### Unit 2.3 — Call → Job → Dispatch Pipeline
-- [ ] Auto-create jobs from calls, dispatch techs via SMS
+- [x] Auto-create jobs from calls, dispatch techs via SMS — dispatch.ts (matchTechnician, sendDispatchSms via fetch, dispatchJob); wired into gather webhook; Twilio REST API for SMS
   - ACTION: `src/server/services/dispatch.ts` (createJobFromCall, matchTech, dispatchTechnician SMS, sendCustomerConfirmation SMS)
   - VERIFY: Creates valid Job, tech matching works, SMS sends or mocks
   - NOTES:

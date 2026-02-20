@@ -4,6 +4,7 @@ import { parseFormBody, validateTwilioSignature, buildTwiML } from '@/server/ser
 import { callClaudeJSON } from '@/server/services/ai/claude';
 import { buildClassifierPrompt, CLASSIFIER_SYSTEM_PROMPT, type ClassifierResult } from '@/server/services/ai/prompts/classifier';
 import { mockClassifierResult } from '@/server/services/ai/mock';
+import { dispatchJob } from '@/server/services/dispatch';
 
 export const runtime = 'edge';
 
@@ -113,6 +114,15 @@ export async function POST(req: Request): Promise<Response> {
       await db.call.update({
         where: { id: callId },
         data: { jobId, updatedAt: new Date().toISOString() },
+      });
+
+      // Dispatch technician (fire and forget — don't block TwiML response)
+      dispatchJob(db, jobId, orgId, {
+        accountSid: env.TWILIO_ACCOUNT_SID,
+        authToken: env.TWILIO_AUTH_TOKEN,
+        fromPhone: env.TWILIO_PHONE_NUMBER,
+      }).catch(() => {
+        // Non-critical — caller already has confirmation
       });
     }
   }
