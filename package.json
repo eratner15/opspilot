@@ -15,6 +15,7 @@
     "seed": "npx tsx prisma/seed.ts"
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "^0.78.0",
     "@clerk/nextjs": "^6.0.0",
     "@hookform/resolvers": "^3.9.0",
     "@prisma/adapter-d1": "^6.0.0",

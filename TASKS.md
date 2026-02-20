@@ -1,7 +1,7 @@
 # OpsPilot — TASKS.md
 ## Autonomous Build Task Registry
 ## Last Updated: 2026-02-19
-## Total Progress: 19 / 48 units complete
+## Total Progress: 20 / 48 units complete
 ## Current Phase: 2 — VOICE & AI
 ## Build Status: IN PROGRESS
 
@@ -261,7 +261,7 @@ If all tasks in a phase are done → run Phase Gate → proceed to next phase.
 ## PHASE 2: VOICE & AI
 
 ### Unit 2.1 — Claude API Service + AI Prompts
-- [ ] Claude wrapper with retry, cost tracking, all prompt templates
+- [x] Claude wrapper with retry, cost tracking, all prompt templates — callClaude (retry×3, cost calc), callClaudeJSON, classifier prompt, voice-agent prompt, mock fallbacks; @anthropic-ai/sdk installed
   - ACTION: `src/server/services/ai/claude.ts` (callClaude with retry×3, cost calc — NO PII in logs), classifier prompt, voice-agent prompt. Access ANTHROPIC_API_KEY from Cloudflare env.
   - If no key: mock responses returning realistic structured data
   - VERIFY: callClaude works or mocks correctly, classifier returns valid JSON
