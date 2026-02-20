@@ -53,3 +53,12 @@ const enforceAuth = t.middleware(async ({ ctx, next }) => {
 });
 
 export const protectedProcedure = t.procedure.use(enforceAuth);
+
+const enforceUser = t.middleware(async ({ ctx, next }) => {
+  if (!ctx.userId) {
+    throw new TRPCError({ code: "UNAUTHORIZED", message: "Not authenticated" });
+  }
+  return next({ ctx: { ...ctx, userId: ctx.userId } });
+});
+
+export const userProcedure = t.procedure.use(enforceUser);

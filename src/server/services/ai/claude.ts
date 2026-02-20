@@ -35,6 +35,15 @@ export async function callClaude(
   messages: ClaudeMessage[],
   options: ClaudeOptions = {}
 ): Promise<ClaudeResponse> {
+  if (!apiKey) {
+    return {
+      content: '[AI unavailable — ANTHROPIC_API_KEY not configured]',
+      inputTokens: 0,
+      outputTokens: 0,
+      costCents: 0,
+    };
+  }
+
   const {
     model = 'claude-sonnet-4-6',
     maxTokens = 1024,
