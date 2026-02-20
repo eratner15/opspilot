@@ -1,0 +1,20 @@
+{
+  "$schema": "./node_modules/wrangler/config-schema.json",
+  "name": "opspilot",
+  "main": ".open-next/worker.js",
+  "compatibility_date": "2026-02-07",
+  "compatibility_flags": ["nodejs_compat"],
+  "assets": { "directory": ".open-next/assets", "binding": "ASSETS" },
+  "d1_databases": [{
+    "binding": "DB",
+    "database_name": "opspilot-db",
+    "database_id": "b1f1dfda-73d0-4e31-90aa-e896a24a5560"
+  }],
+  "kv_namespaces": [{
+    "binding": "KV",
+    "id": "2a9d552ccff54a57a676f5d48b395ede"
+  }],
+  "triggers": {
+    "crons": ["0 8 * * 1", "0 0 * * *"]
+  }
+}

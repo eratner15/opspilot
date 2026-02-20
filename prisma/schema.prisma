@@ -1,0 +1,233 @@
+// Prisma schema for OpsPilot — D1/SQLite compatible
+// NO enums (use String + Zod), NO DateTime (use String ISO), NO Decimal (use Int cents)
+// NO onDelete: Cascade, NO @db.Text, IDs = crypto.randomUUID()
+
+generator client {
+  provider        = "prisma-client-js"
+  previewFeatures = ["driverAdapters"]
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// ─── Organization ────────────────────────────────────────────────────────────
+
+model Organization {
+  id          String   @id @default(uuid())
+  name        String
+  phone       String?
+  email       String?
+  address     String?
+  city        String?
+  state       String?
+  zip         String?
+  logoUrl     String?
+  timezone    String   @default("America/New_York")
+  // Twilio phone number for this org
+  twilioPhone String?
+  // Stripe customer ID
+  stripeCustomerId String?
+  plan        String   @default("TRIAL") // TRIAL | STARTER | PRO | ENTERPRISE
+  planStatus  String   @default("ACTIVE") // ACTIVE | PAST_DUE | CANCELLED
+  createdAt   String
+  updatedAt   String
+
+  users        User[]
+  customers    Customer[]
+  jobs         Job[]
+  technicians  Technician[]
+  quotes       Quote[]
+  invoices     Invoice[]
+  calls        Call[]
+  auditLogs    AuditLog[]
+}
+
+// ─── User ─────────────────────────────────────────────────────────────────────
+
+model User {
+  id             String   @id @default(uuid())
+  organizationId String
+  clerkUserId    String   @unique
+  email          String
+  firstName      String
+  lastName       String
+  role           String   @default("TECHNICIAN") // OWNER | ADMIN | DISPATCHER | TECHNICIAN
+  createdAt      String
+  updatedAt      String
+
+  organization   Organization @relation(fields: [organizationId], references: [id])
+}
+
+// ─── Customer ─────────────────────────────────────────────────────────────────
+
+model Customer {
+  id             String   @id @default(uuid())
+  organizationId String
+  firstName      String
+  lastName       String
+  phone          String
+  email          String?
+  address        String?
+  city           String?
+  state          String?
+  zip            String?
+  type           String   @default("RESIDENTIAL") // RESIDENTIAL | COMMERCIAL
+  equipmentJson  String?  // JSON string of equipment array
+  notes          String?
+  source         String?  // HOW_HEARD: PHONE | REFERRAL | ONLINE | etc
+  createdAt      String
+  updatedAt      String
+
+  organization   Organization @relation(fields: [organizationId], references: [id])
+  jobs           Job[]
+  quotes         Quote[]
+  invoices       Invoice[]
+  calls          Call[]
+}
+
+// ─── Technician ───────────────────────────────────────────────────────────────
+
+model Technician {
+  id             String   @id @default(uuid())
+  organizationId String
+  firstName      String
+  lastName       String
+  phone          String
+  email          String?
+  type           String   @default("EMPLOYEE") // EMPLOYEE | SUBCONTRACTOR
+  skillsJson     String?  // JSON string of skills array
+  status         String   @default("ACTIVE") // ACTIVE | INACTIVE | ON_LEAVE
+  notes          String?
+  createdAt      String
+  updatedAt      String
+
+  organization   Organization @relation(fields: [organizationId], references: [id])
+  jobs           Job[]
+}
+
+// ─── Job ──────────────────────────────────────────────────────────────────────
+
+model Job {
+  id             String   @id @default(uuid())
+  organizationId String
+  jobNumber      String
+  customerId     String?
+  technicianId   String?
+  callId         String?
+  quoteId        String?
+  status         String   @default("NEW")
+  // NEW | SCHEDULED | EN_ROUTE | IN_PROGRESS | COMPLETED | INVOICED | PAID | CANCELLED | ON_HOLD
+  category       String?  // HVAC | PLUMBING | ELECTRICAL | ROOFING | OTHER
+  priority       String   @default("NORMAL") // LOW | NORMAL | HIGH | EMERGENCY
+  title          String
+  description    String?
+  scheduledAt    String?  // ISO datetime
+  scheduledWindow String? // MORNING | AFTERNOON | EVENING | ALL_DAY
+  completedAt    String?
+  lineItemsJson  String?  // JSON string of line items
+  totalCents     Int      @default(0)
+  notes          String?
+  createdAt      String
+  updatedAt      String
+
+  organization   Organization @relation(fields: [organizationId], references: [id])
+  customer       Customer?    @relation(fields: [customerId], references: [id])
+  technician     Technician?  @relation(fields: [technicianId], references: [id])
+  invoices       Invoice[]
+}
+
+// ─── Quote ────────────────────────────────────────────────────────────────────
+
+model Quote {
+  id             String   @id @default(uuid())
+  organizationId String
+  quoteNumber    String
+  customerId     String
+  jobId          String?
+  status         String   @default("DRAFT") // DRAFT | SENT | ACCEPTED | DECLINED | EXPIRED
+  publicToken    String   @unique
+  title          String?
+  lineItemsJson  String   // JSON string of line items
+  subtotalCents  Int      @default(0)
+  taxRateBps     Int      @default(0) // basis points (600 = 6%)
+  taxCents       Int      @default(0)
+  totalCents     Int      @default(0)
+  notes          String?
+  validUntil     String?  // ISO date
+  sentAt         String?
+  acceptedAt     String?
+  signatureData  String?  // base64 PNG
+  createdAt      String
+  updatedAt      String
+
+  organization   Organization @relation(fields: [organizationId], references: [id])
+  customer       Customer     @relation(fields: [customerId], references: [id])
+}
+
+// ─── Invoice ──────────────────────────────────────────────────────────────────
+
+model Invoice {
+  id             String   @id @default(uuid())
+  organizationId String
+  invoiceNumber  String
+  customerId     String
+  jobId          String?
+  status         String   @default("DRAFT") // DRAFT | SENT | PAID | OVERDUE | CANCELLED
+  publicToken    String   @unique
+  lineItemsJson  String   // JSON string of line items
+  subtotalCents  Int      @default(0)
+  taxRateBps     Int      @default(0)
+  taxCents       Int      @default(0)
+  totalCents     Int      @default(0)
+  amountPaidCents Int     @default(0)
+  dueDate        String?  // ISO date
+  sentAt         String?
+  paidAt         String?
+  stripePaymentIntentId String?
+  stripeCheckoutSessionId String?
+  notes          String?
+  createdAt      String
+  updatedAt      String
+
+  organization   Organization @relation(fields: [organizationId], references: [id])
+  customer       Customer     @relation(fields: [customerId], references: [id])
+  job            Job?         @relation(fields: [jobId], references: [id])
+}
+
+// ─── Call ─────────────────────────────────────────────────────────────────────
+
+model Call {
+  id             String   @id @default(uuid())
+  organizationId String
+  customerId     String?
+  fromPhone      String
+  toPhone        String
+  twilioCallSid  String?  @unique
+  status         String   @default("INCOMING") // INCOMING | ANSWERED | MISSED | VOICEMAIL
+  duration       Int?     // seconds
+  transcript     String?
+  aiAnalysisJson String?  // JSON: {intent, category, priority, summary, confidence}
+  jobId          String?
+  createdAt      String
+  updatedAt      String
+
+  organization   Organization @relation(fields: [organizationId], references: [id])
+  customer       Customer?    @relation(fields: [customerId], references: [id])
+}
+
+// ─── AuditLog ─────────────────────────────────────────────────────────────────
+
+model AuditLog {
+  id             String   @id @default(uuid())
+  organizationId String
+  userId         String?
+  action         String   // e.g. "job.create", "invoice.statusChange"
+  entityType     String   // e.g. "Job", "Invoice"
+  entityId       String
+  changesJson    String?  // JSON: {field: {from, to}}
+  createdAt      String
+
+  organization   Organization @relation(fields: [organizationId], references: [id])
+}

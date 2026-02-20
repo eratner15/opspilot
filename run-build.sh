@@ -21,6 +21,9 @@ if ! command -v claude &> /dev/null; then
     exit 1
 fi
 
+# Unset CLAUDECODE so nested `claude` invocations are allowed
+unset CLAUDECODE
+
 echo "Starting in 5 seconds..."
 sleep 5
 
