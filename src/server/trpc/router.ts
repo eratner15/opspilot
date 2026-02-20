@@ -1,7 +1,13 @@
 import { router } from "./trpc";
+import { customersRouter } from "./routers/customers";
+import { techniciansRouter } from "./routers/technicians";
+import { jobsRouter } from "./routers/jobs";
 
 export const appRouter = router({
-  // Routers will be added here as they are built
+  customers: customersRouter,
+  technicians: techniciansRouter,
+  jobs: jobsRouter,
 });
+
 
 export type AppRouter = typeof appRouter;

@@ -34,6 +34,12 @@ export function TableSkeleton({ rows = 5 }: { rows?: number }) {
   );
 }
 
+export function LoadingSkeleton({ variant = "card" }: { variant?: "card" | "table" | "kpi" }) {
+  if (variant === "table") return <TableSkeleton />;
+  if (variant === "kpi") return <KPISkeleton />;
+  return <CardSkeleton />;
+}
+
 export function KPISkeleton() {
   return (
     <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
