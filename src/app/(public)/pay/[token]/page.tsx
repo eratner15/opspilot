@@ -102,7 +102,8 @@ export default async function PublicPayPage({ params }: Props) {
 
           {/* Line Items */}
           <div className="px-6 py-4">
-            <table className="w-full text-sm">
+            <div className="overflow-x-auto -mx-2 px-2">
+            <table className="w-full text-sm min-w-[400px]">
               <thead>
                 <tr className="border-b border-zinc-100 text-xs font-medium uppercase text-zinc-400">
                   <th className="pb-2 text-left">Description</th>
@@ -126,6 +127,7 @@ export default async function PublicPayPage({ params }: Props) {
                 ))}
               </tbody>
             </table>
+            </div>
 
             {/* Totals */}
             <div className="mt-4 space-y-1 border-t border-zinc-100 pt-4">

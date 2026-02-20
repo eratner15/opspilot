@@ -214,7 +214,8 @@ export default function InvoiceDetailPage() {
               <CardTitle className="text-base">Line Items</CardTitle>
             </CardHeader>
             <CardContent>
-              <table className="w-full text-sm">
+              <div className="overflow-x-auto -mx-2 px-2">
+              <table className="w-full text-sm min-w-[360px]">
                 <thead>
                   <tr className="border-b text-xs font-medium uppercase text-muted-foreground">
                     <th className="pb-2 text-left">Description</th>
@@ -238,6 +239,7 @@ export default function InvoiceDetailPage() {
                   ))}
                 </tbody>
               </table>
+              </div>
               <div className="mt-4 space-y-1 border-t pt-4">
                 <div className="flex justify-between text-sm text-muted-foreground">
                   <span>Subtotal</span>

@@ -1,7 +1,7 @@
 # OpsPilot — TASKS.md
 ## Autonomous Build Task Registry
 ## Last Updated: 2026-02-19
-## Total Progress: 46 / 48 units complete
+## Total Progress: 47 / 48 units complete
 ## Current Phase: 5 — POLISH & SECURITY
 ## Build Status: IN PROGRESS
 
@@ -464,25 +464,25 @@ If all tasks in a phase are done → run Phase Gate → proceed to next phase.
 ## PHASE 6: LAUNCH
 
 ### Unit 6.1 — Seed Script Enhancement
-- [ ] Demo-quality seed data
+- [x] Demo-quality seed data — 20 customers, 26 jobs, 10 calls with transcripts, 23 invoices, 6 quotes, audit log entries
   - ACTION: Realistic FL names/addresses, good chart data, calls with transcripts
   - VERIFY: Dashboard looks impressive, charts show trends
   - NOTES:
 
 ### Unit 6.2 — Onboarding Flow
-- [ ] First-login setup wizard
+- [x] First-login setup wizard — 4-step wizard (Welcome/Org/Tech/Ready), dashboard onboarding banner
   - ACTION: Detect first login → Welcome→Org Setup→Add Tech→Dashboard
   - VERIFY: New user sees onboarding, returning user→dashboard
   - NOTES:
 
 ### Unit 6.3 — Landing Page
-- [ ] Marketing page with hero, features, pricing
+- [x] Marketing page with hero, features, pricing — dark hero, how-it-works, features, testimonials, 3-tier pricing, FAQ
   - ACTION: `src/app/page.tsx` — Hero, features (Capture/Execute/Grow), pricing ($199/$349/Enterprise), FAQ
   - VERIFY: Loads fast, responsive, CTAs work
   - NOTES:
 
 ### Unit 6.4 — Public Pages Polish
-- [ ] Polish quote, invoice, booking pages
+- [x] Polish quote, invoice, booking pages — overflow-x-auto on all tables, /book/[slug] booking form with API route
   - ACTION: Polish /quote/[token], /pay/[token], create /book/[slug]
   - VERIFY: All work without auth, professional, mobile-friendly
   - NOTES:

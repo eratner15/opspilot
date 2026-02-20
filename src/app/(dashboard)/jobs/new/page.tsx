@@ -337,52 +337,54 @@ export default function NewJobPage() {
               ) : (
                 <>
                   {lineItems.map((item, idx) => (
-                    <div key={idx} className="grid grid-cols-12 gap-2 items-start">
-                      <div className="col-span-6">
+                    <div key={idx} className="flex flex-col gap-2 sm:grid sm:grid-cols-12 sm:items-start">
+                      <div className="sm:col-span-6">
                         <Input
                           placeholder="Description"
                           value={item.description}
                           onChange={(e) => updateLineItem(idx, "description", e.target.value)}
                         />
                       </div>
-                      <div className="col-span-2">
-                        <Input
-                          type="number"
-                          placeholder="Qty"
-                          min="0"
-                          step="0.01"
-                          value={item.quantity}
-                          onChange={(e) =>
-                            updateLineItem(idx, "quantity", parseFloat(e.target.value) || 0)
-                          }
-                        />
-                      </div>
-                      <div className="col-span-3">
-                        <Input
-                          type="number"
-                          placeholder="Price ($)"
-                          min="0"
-                          step="0.01"
-                          value={item.unitPriceCents / 100}
-                          onChange={(e) =>
-                            updateLineItem(
-                              idx,
-                              "unitPriceCents",
-                              Math.round((parseFloat(e.target.value) || 0) * 100)
-                            )
-                          }
-                        />
-                      </div>
-                      <div className="col-span-1 flex justify-end">
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="icon"
-                          className="h-9 w-9 text-destructive"
-                          onClick={() => removeLineItem(idx)}
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
+                      <div className="flex gap-2 sm:contents">
+                        <div className="flex-1 sm:col-span-2">
+                          <Input
+                            type="number"
+                            placeholder="Qty"
+                            min="0"
+                            step="0.01"
+                            value={item.quantity}
+                            onChange={(e) =>
+                              updateLineItem(idx, "quantity", parseFloat(e.target.value) || 0)
+                            }
+                          />
+                        </div>
+                        <div className="flex-[2] sm:col-span-3">
+                          <Input
+                            type="number"
+                            placeholder="Price ($)"
+                            min="0"
+                            step="0.01"
+                            value={item.unitPriceCents / 100}
+                            onChange={(e) =>
+                              updateLineItem(
+                                idx,
+                                "unitPriceCents",
+                                Math.round((parseFloat(e.target.value) || 0) * 100)
+                              )
+                            }
+                          />
+                        </div>
+                        <div className="flex items-center sm:col-span-1 sm:justify-end">
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="icon"
+                            className="h-9 w-9 text-destructive"
+                            onClick={() => removeLineItem(idx)}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
                       </div>
                     </div>
                   ))}
