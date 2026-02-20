@@ -1,7 +1,7 @@
 # OpsPilot — TASKS.md
 ## Autonomous Build Task Registry
 ## Last Updated: 2026-02-19
-## Total Progress: 34 / 48 units complete
+## Total Progress: 36 / 48 units complete
 ## Current Phase: 3 — QUOTING & INVOICING
 ## Build Status: IN PROGRESS
 
@@ -370,13 +370,13 @@ If all tasks in a phase are done → run Phase Gate → proceed to next phase.
 ## PHASE 4: ANALYTICS & REPORTING
 
 ### Unit 4.1 — Analytics API
-- [ ] Expanded analytics queries
+- [x] Expanded analytics queries — getRevenueByPeriod (day/week/month grouping), getJobsByCategory, getTechPerformance (completion rate), getCallMetrics (conversion rate), getOutstandingInvoices, getCustomerMetrics; tsc clean
   - ACTION: getRevenueByPeriod, getJobsByCategory, getTechPerformance, getCallMetrics, getOutstandingInvoices, getCustomerMetrics
   - VERIFY: Correct aggregates, date filtering, group-by
   - NOTES:
 
 ### Unit 4.2 — Analytics Dashboard Page
-- [ ] Full analytics page with charts and date picker
+- [x] Full analytics page with charts and date picker — date range picker (7/30/90d), recharts line+bar charts, tech performance table, outstanding invoices list, call metrics KPIs; responsive; tsc clean
   - ACTION: `analytics/page.tsx` with date range picker, revenue chart, category breakdown, tech table, outstanding invoices, call metrics
   - VERIFY: All charts render, date picker updates all, responsive
   - NOTES:

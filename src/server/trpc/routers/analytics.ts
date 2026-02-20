@@ -337,6 +337,38 @@ export const analyticsRouter = router({
     }));
   }),
 
+  getTechRevenue: protectedProcedure
+    .input(z.object({ technicianId: z.string(), months: z.number().min(3).max(12).default(6) }))
+    .query(async ({ ctx, input }) => {
+      const now = new Date();
+      const results: { month: string; revenueCents: number; jobCount: number }[] = [];
+
+      for (let i = input.months - 1; i >= 0; i--) {
+        const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+        const start = d.toISOString().slice(0, 7) + "-01";
+        const nextMonth = new Date(d.getFullYear(), d.getMonth() + 1, 1);
+        const end = nextMonth.toISOString().slice(0, 10);
+
+        const jobs = await ctx.db.job.findMany({
+          where: {
+            organizationId: ctx.organizationId,
+            technicianId: input.technicianId,
+            status: { in: ["COMPLETED", "INVOICED", "PAID"] },
+            completedAt: { gte: start, lt: end },
+          },
+          select: { totalCents: true },
+        });
+
+        results.push({
+          month: d.toISOString().slice(0, 7),
+          revenueCents: jobs.reduce((s, j) => s + (j.totalCents ?? 0), 0),
+          jobCount: jobs.length,
+        });
+      }
+
+      return results;
+    }),
+
   getCustomerMetrics: protectedProcedure.query(async ({ ctx }) => {
     const [total, newThisMonth, withJobs] = await Promise.all([
       ctx.db.customer.count({ where: { organizationId: ctx.organizationId } }),

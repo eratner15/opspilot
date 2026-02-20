@@ -15,13 +15,28 @@ import {
   Wrench,
   ArrowLeft,
   Briefcase,
+  TrendingUp,
+  Award,
+  BarChart2,
 } from "lucide-react";
 import Link from "next/link";
-import { formatPhone, formatDate, formatDateTime } from "@/lib/utils";
+import { formatPhone, formatDate, formatDateTime, formatCurrency } from "@/lib/utils";
 import { JOB_STATUS_LABELS, JOB_PRIORITY_LABELS } from "@/lib/constants";
 import { toast } from "sonner";
 import { ConfirmDialog } from "@/components/shared/confirm-dialog";
 import { useState } from "react";
+import { cn } from "@/lib/utils";
+import {
+  AreaChart,
+  Area,
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  Tooltip,
+  ResponsiveContainer,
+  CartesianGrid,
+} from "recharts";
 
 export default function TechnicianDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -29,6 +44,8 @@ export default function TechnicianDetailPage() {
   const [showDelete, setShowDelete] = useState(false);
 
   const { data: tech, isLoading } = api.technicians.getById.useQuery({ id });
+  const { data: teamPerf } = api.analytics.getTechPerformance.useQuery();
+  const { data: revenueHistory } = api.analytics.getTechRevenue.useQuery({ technicianId: id, months: 6 });
 
   const deleteMutation = api.technicians.update.useMutation({
     onSuccess: () => {
@@ -44,11 +61,53 @@ export default function TechnicianDetailPage() {
 
   const skills: string[] = tech.skillsJson ? JSON.parse(tech.skillsJson) : [];
 
-  const completedJobs = tech.jobs.filter((j) => j.status === "COMPLETED").length;
+  const completedJobs = tech.jobs.filter((j) => j.status === "COMPLETED" || j.status === "INVOICED" || j.status === "PAID").length;
   const activeJobs = tech.jobs.filter(
     (j) =>
       j.status === "SCHEDULED" || j.status === "EN_ROUTE" || j.status === "IN_PROGRESS"
   ).length;
+  const completionRate = tech.jobs.length > 0 ? Math.round((completedJobs / tech.jobs.length) * 100) : 0;
+  const revenueFromJobs = tech.jobs.reduce((sum, j) => sum + (j.totalCents ?? 0), 0);
+
+  // Jobs by status breakdown
+  const statusBreakdown: Record<string, number> = {};
+  for (const job of tech.jobs) {
+    statusBreakdown[job.status] = (statusBreakdown[job.status] ?? 0) + 1;
+  }
+
+  // Avg completion time (createdAt → completedAt)
+  const completedWithTime = tech.jobs.filter(
+    (j) => (j.status === "COMPLETED" || j.status === "INVOICED" || j.status === "PAID") && j.completedAt
+  );
+  const avgCompletionDays =
+    completedWithTime.length > 0
+      ? Math.round(
+          completedWithTime.reduce((sum, j) => {
+            const created = new Date(j.createdAt).getTime();
+            const completed = new Date(j.completedAt!).getTime();
+            return sum + (completed - created) / (1000 * 60 * 60 * 24);
+          }, 0) / completedWithTime.length
+        )
+      : null;
+
+  // Team rank
+  const sortedTeam = teamPerf ? [...teamPerf].sort((a, b) => b.completedJobs - a.completedJobs) : [];
+  const myRank = sortedTeam.findIndex((t) => t.technicianId === id) + 1;
+
+  // Sparkline data: format month labels
+  const sparklineData = revenueHistory?.map((r) => ({
+    month: new Date(r.month + "-01").toLocaleDateString("en-US", { month: "short" }),
+    revenue: r.revenueCents / 100,
+    jobs: r.jobCount,
+  })) ?? [];
+
+  // Team comparison: highlight this tech
+  const teamComparisonData = sortedTeam.map((t) => ({
+    name: t.name.split(" ")[0], // first name only for chart
+    completionRate: t.completionRate,
+    jobs: t.completedJobs,
+    isMe: t.technicianId === id,
+  }));
 
   return (
     <div className="space-y-6">
@@ -65,7 +124,7 @@ export default function TechnicianDetailPage() {
       </PageHeader>
 
       {/* Stats */}
-      <div className="grid grid-cols-2 gap-4 lg:grid-cols-3">
+      <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
         <Card>
           <CardContent className="pt-4">
             <div className="flex items-center gap-2 text-muted-foreground text-sm">
@@ -87,13 +146,165 @@ export default function TechnicianDetailPage() {
         <Card>
           <CardContent className="pt-4">
             <div className="flex items-center gap-2 text-muted-foreground text-sm">
-              <Briefcase className="h-4 w-4" />
-              Completed
+              <TrendingUp className="h-4 w-4" />
+              Completion Rate
             </div>
-            <div className="text-2xl font-bold mt-1 text-green-600">{completedJobs}</div>
+            <div className={cn("text-2xl font-bold mt-1", completionRate >= 80 ? "text-green-600" : completionRate >= 50 ? "text-amber-600" : "text-red-600")}>
+              {completionRate}%
+            </div>
+            <div className="text-xs text-muted-foreground">{completedJobs} of {tech.jobs.length} completed</div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="pt-4">
+            <div className="flex items-center gap-2 text-muted-foreground text-sm">
+              <Award className="h-4 w-4" />
+              Team Rank
+            </div>
+            <div className="text-2xl font-bold mt-1">
+              {myRank > 0 ? `#${myRank}` : "—"}
+            </div>
+            <div className="text-xs text-muted-foreground">
+              of {sortedTeam.length} technicians
+            </div>
           </CardContent>
         </Card>
       </div>
+
+      {/* Revenue sparkline + performance metrics */}
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+        {/* Revenue Sparkline */}
+        {sparklineData.length > 0 && (
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm font-medium flex items-center gap-2">
+                <TrendingUp className="h-4 w-4 text-muted-foreground" />
+                Revenue — Last 6 Months
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="h-36">
+                <ResponsiveContainer width="100%" height="100%">
+                  <AreaChart data={sparklineData} margin={{ top: 4, right: 4, left: -20, bottom: 0 }}>
+                    <defs>
+                      <linearGradient id="techRevGrad" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="5%" stopColor="#2563eb" stopOpacity={0.2} />
+                        <stop offset="95%" stopColor="#2563eb" stopOpacity={0} />
+                      </linearGradient>
+                    </defs>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+                    <XAxis dataKey="month" tick={{ fontSize: 11 }} />
+                    <YAxis tick={{ fontSize: 11 }} tickFormatter={(v) => `$${(v / 1000).toFixed(0)}k`} />
+                    <Tooltip
+                      formatter={(value: number) => [`$${value.toLocaleString()}`, "Revenue"]}
+                    />
+                    <Area
+                      type="monotone"
+                      dataKey="revenue"
+                      stroke="#2563eb"
+                      strokeWidth={2}
+                      fill="url(#techRevGrad)"
+                    />
+                  </AreaChart>
+                </ResponsiveContainer>
+              </div>
+              <div className="mt-2 flex items-center justify-between text-xs text-muted-foreground">
+                <span>Total revenue: {formatCurrency(revenueFromJobs)}</span>
+                {avgCompletionDays !== null && (
+                  <span>Avg completion: {avgCompletionDays}d</span>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Jobs by Status */}
+        {Object.keys(statusBreakdown).length > 0 && (
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm font-medium flex items-center gap-2">
+                <BarChart2 className="h-4 w-4 text-muted-foreground" />
+                Jobs by Status
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-2 mt-1">
+                {Object.entries(statusBreakdown).map(([status, count]) => {
+                  const pct = tech.jobs.length > 0 ? Math.round((count / tech.jobs.length) * 100) : 0;
+                  const barColor =
+                    status === "COMPLETED" || status === "INVOICED" || status === "PAID"
+                      ? "bg-green-500"
+                      : status === "IN_PROGRESS" || status === "EN_ROUTE" || status === "SCHEDULED"
+                      ? "bg-blue-500"
+                      : status === "CANCELLED"
+                      ? "bg-red-400"
+                      : "bg-amber-400";
+                  return (
+                    <div key={status}>
+                      <div className="flex justify-between text-xs mb-0.5">
+                        <span className="text-muted-foreground">{JOB_STATUS_LABELS[status] ?? status}</span>
+                        <span className="font-medium">{count} ({pct}%)</span>
+                      </div>
+                      <div className="h-1.5 w-full rounded-full bg-muted overflow-hidden">
+                        <div className={cn("h-full rounded-full", barColor)} style={{ width: `${pct}%` }} />
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </CardContent>
+          </Card>
+        )}
+      </div>
+
+      {/* Team Comparison */}
+      {teamComparisonData.length > 1 && (
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium flex items-center gap-2">
+              <Award className="h-4 w-4 text-muted-foreground" />
+              Team Comparison — Completion Rate
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="h-40">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={teamComparisonData} margin={{ top: 4, right: 4, left: -20, bottom: 0 }}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+                  <XAxis dataKey="name" tick={{ fontSize: 11 }} />
+                  <YAxis domain={[0, 100]} tickFormatter={(v) => `${v}%`} tick={{ fontSize: 11 }} />
+                  <Tooltip
+                    formatter={(value: number) => [`${value}%`, "Completion Rate"]}
+                  />
+                  <Bar
+                    dataKey="completionRate"
+                    radius={[3, 3, 0, 0]}
+                    fill="#94a3b8"
+                    // highlight current tech
+                    label={false}
+                  />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+            <div className="mt-2 grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-4">
+              {sortedTeam.map((t, i) => (
+                <div
+                  key={t.technicianId}
+                  className={cn(
+                    "rounded-lg border p-2 text-xs",
+                    t.technicianId === id && "border-blue-500 bg-blue-50 dark:bg-blue-950"
+                  )}
+                >
+                  <div className="font-medium truncate">{t.name}</div>
+                  <div className="text-muted-foreground mt-0.5">
+                    #{i + 1} · {t.completedJobs} jobs · {t.completionRate}%
+                  </div>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       <div className="grid gap-6 lg:grid-cols-3">
         {/* Left: Info */}
