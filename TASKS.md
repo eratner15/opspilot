@@ -1,8 +1,8 @@
 # OpsPilot — TASKS.md
 ## Autonomous Build Task Registry
 ## Last Updated: 2026-02-19
-## Total Progress: 15 / 48 units complete
-## Current Phase: 1 — CORE CRUD
+## Total Progress: 19 / 48 units complete
+## Current Phase: 2 — VOICE & AI
 ## Build Status: IN PROGRESS
 
 ---
@@ -237,19 +237,19 @@ If all tasks in a phase are done → run Phase Gate → proceed to next phase.
   - NOTES:
 
 ### Unit 1.7 — Dashboard KPIs
-- [ ] Analytics router + dashboard with KPIs, chart, activity feed
+- [x] Analytics router + dashboard with KPIs, chart, activity feed — analyticsRouter (getDashboardKPIs, getRevenueChart, getRecentActivity), recharts line chart 30d, KPI cards (revenue/jobs/active/calls/customers/outstanding), activity feed, quick actions
   - ACTION: `src/server/trpc/routers/analytics.ts` (getDashboardKPIs, getRevenueChart, getRecentActivity), KPI cards (Revenue, Jobs Completed, Avg Ticket, Outstanding, Active Jobs, AI Calls), revenue chart (recharts line 30d), activity feed, update `(dashboard)/page.tsx`
   - VERIFY: KPIs calc from seed data, chart renders, responsive, loading skeletons
   - NOTES:
 
 ### Unit 1.8 — Validation + Error Handling Polish
-- [ ] Audit all routers for Zod, audit logging, error handling, toasts
+- [x] Audit all routers for Zod, audit logging, error handling, toasts — all routers have Zod+organizationId+auditLog; error.tsx/loading.tsx in dashboard group; Toaster in layout; conditional ClerkProvider for build; dashboard force-dynamic
   - ACTION: Audit every router — Zod on inputs, audit log on mutations, organizationId on queries, toast notifications, error boundaries on dashboard layout
   - VERIFY: Invalid data shows errors, mutations log, network errors toast, `pnpm build`
   - NOTES:
 
 ### 🚧 PHASE 1 GATE
-- [ ] Phase 1 quality gate passed
+- [x] Phase 1 quality gate passed — tsc clean, build passes all routes, v1-crud tagged
   - `pnpm tsc --noEmit` ✅
   - `pnpm build` ✅
   - All CRUD pages functional ✅
