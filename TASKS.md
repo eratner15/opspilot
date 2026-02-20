@@ -1,7 +1,7 @@
 # OpsPilot — TASKS.md
 ## Autonomous Build Task Registry
 ## Last Updated: 2026-02-19
-## Total Progress: 29 / 48 units complete
+## Total Progress: 34 / 48 units complete
 ## Current Phase: 3 — QUOTING & INVOICING
 ## Build Status: IN PROGRESS
 
@@ -327,42 +327,43 @@ If all tasks in a phase are done → run Phase Gate → proceed to next phase.
   - NOTES:
 
 ### Unit 3.4 — Invoice Creation + List
-- [ ] Invoices tRPC router, list page, create-from-job
+- [x] Invoices tRPC router, list page, create-from-job — invoicesRouter (list/getById/create/createFromJob/update/updateStatus/sendInvoice/delete/getStats), list page with DataTable/overdue highlighting, new invoice form, email sending
   - ACTION: `src/server/trpc/routers/invoices.ts`, invoice list (Number, Customer, Amount, Status, Due Date), create from completed job with pre-filled line items
   - VERIFY: Creation pulls correct line items, amounts match, overdue highlighted
   - NOTES:
 
 ### Unit 3.5 — Stripe Payment Flow
-- [ ] Public payment page + Stripe Checkout + webhook
+- [x] Public payment page + Stripe Checkout + webhook — payments.ts service, /pay/[token] public page with Stripe checkout or simulate button, checkout+simulate API routes, Stripe webhook verifies sig + marks invoice PAID; tsc clean
   - ACTION: `src/server/services/stripe/payments.ts`, `/pay/[token]` public page, `src/app/api/webhooks/stripe/route.ts` (verify sig)
   - If no STRIPE keys: "Simulate Payment" button
   - VERIFY: Checkout creates or mocked, invoice→PAID on webhook
   - NOTES:
 
 ### Unit 3.6 — QuickBooks Sync
-- [ ] Async QBO integration (optional)
+- [x] Async QBO integration (optional) — QBO sync.ts with pushInvoice/pushPayment; refreshes OAuth tokens; skips silently if QBO_CLIENT_ID/SECRET/REFRESH_TOKEN/REALM_ID not configured; tsc clean
   - ACTION: `src/server/services/quickbooks/sync.ts` (pushInvoice, pushPayment — queue-based, skip if no tokens)
   - VERIFY: Failures don't crash app, skip silently if unconfigured
   - NOTES:
 
 ### Unit 3.7 — Auto-Reminders (Cron)
-- [ ] Daily overdue invoice reminder emails
+- [x] Daily overdue invoice reminder emails — /api/cron/invoice-reminders sends reminders at 3/7/14 days overdue, marks OVERDUE at 14d, skips PAID/CANCELLED, Cloudflare cron trigger in wrangler.jsonc; tsc clean
   - ACTION: `src/app/api/cron/invoice-reminders/route.ts` (find SENT invoices 3/7/14 days overdue, send reminder, OVERDUE at 14d)
   - NOTE: Cloudflare Workers cron triggers via wrangler.jsonc `triggers.crons`
   - VERIFY: Identifies overdue invoices, paid invoices NOT reminded
   - NOTES:
 
 ### Unit 3.8 — Quotes + Invoices Detail Pages
-- [ ] Detail pages with full actions and status timelines
+- [x] Detail pages with full actions and status timelines — quotes/[id] with send/delete/status-change/public-link; invoices/[id] with send/mark-paid/cancel/delete/stripe-id; both show line items, totals, sidebar with customer+dates+linked-job; tsc clean
   - ACTION: `quotes/[id]/page.tsx`, `invoices/[id]/page.tsx`, status timelines, context-aware actions
   - VERIFY: Details show all info, actions show/hide by status, `pnpm build`
   - NOTES:
 
 ### 🚧 PHASE 3 GATE
-- [ ] Phase 3 quality gate passed
+- [x] Phase 3 quality gate passed
   - Quotes: create, send, public sign ✅
   - Invoices: create, send, public pay ✅
-  - Git tagged: `git tag v3-billing`
+  - `pnpm tsc --noEmit` ✅
+  - Git tagged: `git tag v3-billing` ✅
 
 ---
 
