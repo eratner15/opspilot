@@ -15,9 +15,8 @@
     "binding": "KV",
     "id": "2a9d552ccff54a57a676f5d48b395ede"
   }],
-  "triggers": {
-    "crons": ["0 8 * * 1", "0 0 * * *"]
-  },
+  // Crons removed to free slot for lavin-eviction daily digest
+  // Was: "crons": ["0 8 * * 1", "0 0 * * *"]
   "vars": {
     "NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY": "pk_test_YWNjdXJhdGUtcmFtLTMyLmNsZXJrLmFjY291bnRzLmRldiQ",
     "NEXT_PUBLIC_CLERK_SIGN_IN_URL": "/sign-in",
